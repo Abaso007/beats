@@ -6,19 +6,21 @@ from elasticsearch import Elasticsearch, NotFoundError
 class BaseTest(TestCase):
 
     @classmethod
-    def setUpClass(self):
-        self.beat_name = "mockbeat"
-        self.beat_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
-        self.test_binary = self.beat_path + "/libbeat.test"
-        self.beats = [
+    def setUpClass(cls):
+        cls.beat_name = "mockbeat"
+        cls.beat_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "../../")
+        )
+        cls.test_binary = f"{cls.beat_path}/libbeat.test"
+        cls.beats = [
             "filebeat",
             "heartbeat",
             "metricbeat",
             "packetbeat",
-            "winlogbeat"
+            "winlogbeat",
         ]
-        self._es = None
-        super(BaseTest, self).setUpClass()
+        cls._es = None
+        super(BaseTest, cls).setUpClass()
 
     def es_client(self):
         if self._es:

@@ -62,7 +62,7 @@ class Test(metricbeat.BaseTest):
             self.assert_fields_are_documented(evt)
 
     def old_ceph_version(self):
-        if not 'CEPH_CODENAME' in self.COMPOSE_ENV:
+        if 'CEPH_CODENAME' not in self.COMPOSE_ENV:
             return False
 
         return self.COMPOSE_ENV['CEPH_CODENAME'] == 'jewel'

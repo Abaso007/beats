@@ -21,11 +21,11 @@ class TestCommandSetupIndexManagement(BaseTest):
         self.cmd = "--index-management"
         # auto-derived default settings, if nothing else is set
         self.policy_name = self.beat_name
-        self.index_name = self.alias_name = self.beat_name + "-9.9.9"
+        self.index_name = self.alias_name = f"{self.beat_name}-9.9.9"
 
-        self.custom_alias = self.beat_name + "_foo"
-        self.custom_policy = self.beat_name + "_bar"
-        self.custom_template = self.beat_name + "_foobar"
+        self.custom_alias = f"{self.beat_name}_foo"
+        self.custom_policy = f"{self.beat_name}_bar"
+        self.custom_template = f"{self.beat_name}_foobar"
 
         self.es = self.es_client()
         self.idxmgmt = IdxMgmt(self.es, self.index_name)
@@ -58,7 +58,9 @@ class TestCommandSetupIndexManagement(BaseTest):
 
         assert exit_code == 0
         self.idxmgmt.assert_ilm_template_loaded(self.alias_name, self.policy_name, self.alias_name)
-        self.idxmgmt.assert_index_template_index_pattern(self.index_name, [self.index_name + "-*"])
+        self.idxmgmt.assert_index_template_index_pattern(
+            self.index_name, [f"{self.index_name}-*"]
+        )
         self.idxmgmt.assert_docs_written_to_alias(self.alias_name)
         self.idxmgmt.assert_alias_created(self.alias_name)
         self.idxmgmt.assert_policy_created(self.policy_name)
@@ -76,7 +78,9 @@ class TestCommandSetupIndexManagement(BaseTest):
 
         assert exit_code == 0
         self.idxmgmt.assert_ilm_template_loaded(self.alias_name, self.policy_name, self.alias_name)
-        self.idxmgmt.assert_index_template_index_pattern(self.index_name, [self.index_name + "-*"])
+        self.idxmgmt.assert_index_template_index_pattern(
+            self.index_name, [f"{self.index_name}-*"]
+        )
         self.idxmgmt.assert_alias_created(self.alias_name)
         self.idxmgmt.assert_policy_created(self.policy_name)
         # try deleting policy needs to raise an error as it is in use
@@ -121,9 +125,15 @@ class TestCommandSetupIndexManagement(BaseTest):
         Test  setup --index-management when policy_name is configured
         """
         self.render_config()
-        exit_code = self.run_beat(logging_args=["-v", "-d", "*"],
-                                  extra_args=["setup", self.cmd,
-                                              "-E", "setup.ilm.policy_name=" + self.custom_policy])
+        exit_code = self.run_beat(
+            logging_args=["-v", "-d", "*"],
+            extra_args=[
+                "setup",
+                self.cmd,
+                "-E",
+                f"setup.ilm.policy_name={self.custom_policy}",
+            ],
+        )
 
         assert exit_code == 0
         self.idxmgmt.assert_ilm_template_loaded(self.alias_name, self.custom_policy, self.alias_name)
@@ -137,42 +147,51 @@ class TestCommandSetupIndexManagement(BaseTest):
         """
         policy_name = "mockbeat-test"
         # update policy to verify overwrite behaviour
-        self.es.transport.perform_request('PUT', '/_ilm/policy/' + policy_name,
-                                          body={
-                                              "policy": {
-                                                 "phases": {
-                                                     "delete": {
-                                                         "actions": {
-                                                             "delete": {}
-                                                         }
-                                                     }
-                                                 }
-                                              }
-                                          })
-        resp = self.es.transport.perform_request('GET', '/_ilm/policy/' + policy_name)
+        self.es.transport.perform_request(
+            'PUT',
+            f'/_ilm/policy/{policy_name}',
+            body={"policy": {"phases": {"delete": {"actions": {"delete": {}}}}}},
+        )
+        resp = self.es.transport.perform_request('GET', f'/_ilm/policy/{policy_name}')
         assert "delete" in resp[policy_name]["policy"]["phases"]
         assert "hot" not in resp[policy_name]["policy"]["phases"]
 
         # ensure ilm policy is not overwritten
         self.render_config()
-        exit_code = self.run_beat(logging_args=["-v", "-d", "*"],
-                                  extra_args=["setup", self.cmd,
-                                              "-E", "setup.ilm.enabled=true",
-                                              "-E", "setup.ilm.overwrite=false",
-                                              "-E", "setup.ilm.policy_name="+policy_name])
+        exit_code = self.run_beat(
+            logging_args=["-v", "-d", "*"],
+            extra_args=[
+                "setup",
+                self.cmd,
+                "-E",
+                "setup.ilm.enabled=true",
+                "-E",
+                "setup.ilm.overwrite=false",
+                "-E",
+                f"setup.ilm.policy_name={policy_name}",
+            ],
+        )
         assert exit_code == 0
-        resp = self.es.transport.perform_request('GET', '/_ilm/policy/' + policy_name)
+        resp = self.es.transport.perform_request('GET', f'/_ilm/policy/{policy_name}')
         assert "delete" in resp[policy_name]["policy"]["phases"]
         assert "hot" not in resp[policy_name]["policy"]["phases"]
 
         # ensure ilm policy is overwritten
-        exit_code = self.run_beat(logging_args=["-v", "-d", "*"],
-                                  extra_args=["setup", self.cmd,
-                                              "-E", "setup.ilm.enabled=true",
-                                              "-E", "setup.ilm.overwrite=true",
-                                              "-E", "setup.ilm.policy_name="+policy_name])
+        exit_code = self.run_beat(
+            logging_args=["-v", "-d", "*"],
+            extra_args=[
+                "setup",
+                self.cmd,
+                "-E",
+                "setup.ilm.enabled=true",
+                "-E",
+                "setup.ilm.overwrite=true",
+                "-E",
+                f"setup.ilm.policy_name={policy_name}",
+            ],
+        )
         assert exit_code == 0
-        resp = self.es.transport.perform_request('GET', '/_ilm/policy/' + policy_name)
+        resp = self.es.transport.perform_request('GET', f'/_ilm/policy/{policy_name}')
         assert "delete" not in resp[policy_name]["policy"]["phases"]
         assert "hot" in resp[policy_name]["policy"]["phases"]
 
@@ -183,13 +202,21 @@ class TestCommandSetupIndexManagement(BaseTest):
         Test setup --index-management when ilm.rollover_alias is configured
         """
         self.render_config()
-        exit_code = self.run_beat(logging_args=["-v", "-d", "*"],
-                                  extra_args=["setup", self.cmd,
-                                              "-E", "setup.ilm.rollover_alias=" + self.custom_alias])
+        exit_code = self.run_beat(
+            logging_args=["-v", "-d", "*"],
+            extra_args=[
+                "setup",
+                self.cmd,
+                "-E",
+                f"setup.ilm.rollover_alias={self.custom_alias}",
+            ],
+        )
 
         assert exit_code == 0
         self.idxmgmt.assert_ilm_template_loaded(self.custom_alias, self.policy_name, self.custom_alias)
-        self.idxmgmt.assert_index_template_index_pattern(self.custom_alias, [self.custom_alias + "-*"])
+        self.idxmgmt.assert_index_template_index_pattern(
+            self.custom_alias, [f"{self.custom_alias}-*"]
+        )
         self.idxmgmt.assert_alias_created(self.custom_alias)
 
     @unittest.skipUnless(INTEGRATION_TESTS, "integration test")
@@ -200,15 +227,23 @@ class TestCommandSetupIndexManagement(BaseTest):
         """
         aliasFieldRef = "%{[agent.name]}-myalias"
         self.render_config()
-        exit_code = self.run_beat(logging_args=["-v", "-d", "*"],
-                                  extra_args=["setup", self.cmd,
-                                              "-E", "setup.ilm.rollover_alias=" + aliasFieldRef])
+        exit_code = self.run_beat(
+            logging_args=["-v", "-d", "*"],
+            extra_args=[
+                "setup",
+                self.cmd,
+                "-E",
+                f"setup.ilm.rollover_alias={aliasFieldRef}",
+            ],
+        )
 
-        self.custom_alias = self.beat_name + "-myalias"
+        self.custom_alias = f"{self.beat_name}-myalias"
 
         assert exit_code == 0
         self.idxmgmt.assert_ilm_template_loaded(self.custom_alias, self.policy_name, self.custom_alias)
-        self.idxmgmt.assert_index_template_index_pattern(self.custom_alias, [self.custom_alias + "-*"])
+        self.idxmgmt.assert_index_template_index_pattern(
+            self.custom_alias, [f"{self.custom_alias}-*"]
+        )
         self.idxmgmt.assert_alias_created(self.custom_alias)
 
     @unittest.skipUnless(INTEGRATION_TESTS, "integration test")
@@ -218,14 +253,23 @@ class TestCommandSetupIndexManagement(BaseTest):
         Test setup --index-management ignores template.name and template.pattern when ilm is enabled
         """
         self.render_config()
-        exit_code = self.run_beat(logging_args=["-v", "-d", "*"],
-                                  extra_args=["setup", self.cmd,
-                                              "-E", "setup.template.name=" + self.custom_template,
-                                              "-E", "setup.template.pattern=" + self.custom_template + "*"])
+        exit_code = self.run_beat(
+            logging_args=["-v", "-d", "*"],
+            extra_args=[
+                "setup",
+                self.cmd,
+                "-E",
+                f"setup.template.name={self.custom_template}",
+                "-E",
+                f"setup.template.pattern={self.custom_template}*",
+            ],
+        )
 
         assert exit_code == 0
         self.idxmgmt.assert_ilm_template_loaded(self.alias_name, self.policy_name, self.alias_name)
-        self.idxmgmt.assert_index_template_index_pattern(self.alias_name, [self.alias_name + "-*"])
+        self.idxmgmt.assert_index_template_index_pattern(
+            self.alias_name, [f"{self.alias_name}-*"]
+        )
         self.idxmgmt.assert_alias_created(self.alias_name)
 
     @unittest.skipUnless(INTEGRATION_TESTS, "integration test")
@@ -235,15 +279,25 @@ class TestCommandSetupIndexManagement(BaseTest):
         Test setup --index-management respects template.name and template.pattern when ilm is disabled
         """
         self.render_config()
-        exit_code = self.run_beat(logging_args=["-v", "-d", "*"],
-                                  extra_args=["setup", self.cmd,
-                                              "-E", "setup.ilm.enabled=false",
-                                              "-E", "setup.template.name=" + self.custom_template,
-                                              "-E", "setup.template.pattern=" + self.custom_template + "*"])
+        exit_code = self.run_beat(
+            logging_args=["-v", "-d", "*"],
+            extra_args=[
+                "setup",
+                self.cmd,
+                "-E",
+                "setup.ilm.enabled=false",
+                "-E",
+                f"setup.template.name={self.custom_template}",
+                "-E",
+                f"setup.template.pattern={self.custom_template}*",
+            ],
+        )
 
         assert exit_code == 0
         self.idxmgmt.assert_index_template_loaded(self.custom_template)
-        self.idxmgmt.assert_index_template_index_pattern(self.custom_template, [self.custom_template + "*"])
+        self.idxmgmt.assert_index_template_index_pattern(
+            self.custom_template, [f"{self.custom_template}*"]
+        )
         self.idxmgmt.assert_alias_not_created(self.alias_name)
         self.idxmgmt.assert_policy_not_created(self.policy_name)
 
@@ -264,7 +318,9 @@ class TestCommandSetupIndexManagement(BaseTest):
         self.idxmgmt.assert_index_template_loaded(self.index_name)
 
         # check that settings are overwritten
-        resp = self.es.transport.perform_request('GET', '/_template/' + self.index_name)
+        resp = self.es.transport.perform_request(
+            'GET', f'/_template/{self.index_name}'
+        )
         assert self.index_name in resp
         index = resp[self.index_name]["settings"]["index"]
         assert index["number_of_shards"] == "2", index["number_of_shards"]
@@ -278,25 +334,43 @@ class TestCommandSetupIndexManagement(BaseTest):
 
         # ensure template with ilm rollover_alias name is created, but ilm policy not yet
         self.render_config()
-        exit_code = self.run_beat(logging_args=["-v", "-d", "*"],
-                                  extra_args=["setup", self.cmd,
-                                              "-E", "setup.ilm.enabled=false",
-                                              "-E", "setup.template.name=" + self.custom_alias,
-                                              "-E", "setup.template.pattern=" + self.custom_alias + "*"])
+        exit_code = self.run_beat(
+            logging_args=["-v", "-d", "*"],
+            extra_args=[
+                "setup",
+                self.cmd,
+                "-E",
+                "setup.ilm.enabled=false",
+                "-E",
+                f"setup.template.name={self.custom_alias}",
+                "-E",
+                f"setup.template.pattern={self.custom_alias}*",
+            ],
+        )
         assert exit_code == 0
         self.idxmgmt.assert_index_template_loaded(self.custom_alias)
         self.idxmgmt.assert_policy_not_created(self.policy_name)
 
         # ensure ilm policy is created, triggering overwriting existing template
-        exit_code = self.run_beat(extra_args=["setup", self.cmd,
-                                              "-E", "setup.template.overwrite=false",
-                                              "-E", "setup.template.settings.index.number_of_shards=2",
-                                              "-E", "setup.ilm.rollover_alias=" + self.custom_alias])
+        exit_code = self.run_beat(
+            extra_args=[
+                "setup",
+                self.cmd,
+                "-E",
+                "setup.template.overwrite=false",
+                "-E",
+                "setup.template.settings.index.number_of_shards=2",
+                "-E",
+                f"setup.ilm.rollover_alias={self.custom_alias}",
+            ]
+        )
         assert exit_code == 0
         self.idxmgmt.assert_ilm_template_loaded(self.custom_alias, self.policy_name, self.custom_alias)
         self.idxmgmt.assert_policy_created(self.policy_name)
         # check that template was overwritten
-        resp = self.es.transport.perform_request('GET', '/_template/' + self.custom_alias)
+        resp = self.es.transport.perform_request(
+            'GET', f'/_template/{self.custom_alias}'
+        )
         assert self.custom_alias in resp
         index = resp[self.custom_alias]["settings"]["index"]
         assert index["number_of_shards"] == "2", index["number_of_shards"]

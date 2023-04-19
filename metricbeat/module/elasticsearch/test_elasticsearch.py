@@ -277,18 +277,16 @@ class Test(metricbeat.BaseTest):
         self.es.index(index='my_index', id='my_id', doc_type='_doc', body=target_doc, pipeline='user_lookup')
 
     def delete_enrich_policy(self):
-        exists = self.es.indices.exists('my_index')
-        if not exists:
+        if exists := self.es.indices.exists('my_index'):
+            self.es.transport.perform_request('DELETE', '/_enrich/policy/users-policy')
+        else:
             return
-
-        self.es.transport.perform_request('DELETE', '/_enrich/policy/users-policy')
 
     def delete_enrich_ingest_pipeline(self):
-        exists = self.es.indices.exists('my_index')
-        if not exists:
+        if exists := self.es.indices.exists('my_index'):
+            self.es.ingest.delete_pipeline(id='user_lookup')
+        else:
             return
-
-        self.es.ingest.delete_pipeline(id='user_lookup')
 
     def start_trial(self):
         # Check if trial is already enabled
@@ -298,10 +296,12 @@ class Test(metricbeat.BaseTest):
 
         # Enable xpack trial
         try:
-            self.es.transport.perform_request('POST', self.license_url + "/start_trial?acknowledge=true")
+            self.es.transport.perform_request(
+                'POST', f"{self.license_url}/start_trial?acknowledge=true"
+            )
         except:
             e = sys.exc_info()[0]
-            print("Trial already enabled. Error: {}".format(e))
+            print(f"Trial already enabled. Error: {e}")
 
     def start_basic(self):
         # Check if basic license is already enabled
@@ -310,10 +310,12 @@ class Test(metricbeat.BaseTest):
             return
 
         try:
-            self.es.transport.perform_request('POST', self.license_url + "/start_basic?acknowledge=true")
+            self.es.transport.perform_request(
+                'POST', f"{self.license_url}/start_basic?acknowledge=true"
+            )
         except:
             e = sys.exc_info()[0]
-            print("Basic license already enabled. Error: {}".format(e))
+            print(f"Basic license already enabled. Error: {e}")
 
     def check_skip(self, metricset):
         if metricset == 'ccr' and not self.is_ccr_available():

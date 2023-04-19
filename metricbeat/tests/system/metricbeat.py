@@ -21,14 +21,16 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 class BaseTest(TestCase):
 
     @classmethod
-    def setUpClass(self):
-        if not hasattr(self, 'beat_name'):
-            self.beat_name = "metricbeat"
+    def setUpClass(cls):
+        if not hasattr(cls, 'beat_name'):
+            cls.beat_name = "metricbeat"
 
-        if not hasattr(self, 'beat_path'):
-            self.beat_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+        if not hasattr(cls, 'beat_path'):
+            cls.beat_path = os.path.abspath(
+                os.path.join(os.path.dirname(__file__), "../../")
+            )
 
-        super(BaseTest, self).setUpClass()
+        super(BaseTest, cls).setUpClass()
 
     def setUp(self):
         super(BaseTest, self).setUp()

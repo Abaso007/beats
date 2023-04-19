@@ -24,7 +24,7 @@ class Test(metricbeat.BaseTest):
     def get_hosts(self):
         username = "postgres"
         host = self.compose_host()
-        dsn = "postgres://{}?sslmode=disable".format(host)
+        dsn = f"postgres://{host}?sslmode=disable"
         return (
             [dsn],
             username,

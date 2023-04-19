@@ -12,8 +12,7 @@ class Test(BaseTest):
         Basic test with exiting Functionbeat normally
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
-            local=True,
+            path=f"{os.path.abspath(self.working_dir)}/log/*", local=True
         )
 
         functionbeat_proc = self.start_beat()
@@ -28,7 +27,7 @@ class Test(BaseTest):
 
         function_name = "testcloudwatchlogs"
         bucket_name = "my-bucket-name"
-        fnb_name = "fnb" + function_name
+        fnb_name = f"fnb{function_name}"
         role = "arn:aws:iam::123456789012:role/MyFunction"
         security_group_ids = ["sg-ABCDEFGHIJKL"]
         subnet_ids = ["subnet-ABCDEFGHIJKL"]
@@ -37,7 +36,7 @@ class Test(BaseTest):
         self._generate_dummy_binary_for_template_checksum()
 
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             cloudwatch={
                 "name": function_name,
                 "bucket": bucket_name,
@@ -76,7 +75,7 @@ class Test(BaseTest):
         self._generate_dummy_binary_for_template_checksum()
 
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             cloudwatch={
                 "name": function_name,
                 "bucket": bucket_name,
@@ -88,7 +87,9 @@ class Test(BaseTest):
         )
 
         self.wait_until(
-            lambda: self.log_contains("error while finding enabled functions: invalid name: '{}'".format(function_name))
+            lambda: self.log_contains(
+                f"error while finding enabled functions: invalid name: '{function_name}'"
+            )
         )
 
         exit_code = functionbeat_proc.kill_and_wait()
@@ -113,5 +114,4 @@ class Test(BaseTest):
         # Trim the extra output from the Go test wrapper (like PASS/FAIL and
         # coverage information).
         log = log[:log.rindex('}')+1]
-        function_template = json.loads(log)
-        return function_template
+        return json.loads(log)

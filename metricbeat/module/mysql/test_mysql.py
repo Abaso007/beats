@@ -47,4 +47,4 @@ class Test(metricbeat.BaseTest):
         self.assert_fields_are_documented(evt)
 
     def get_hosts(self):
-        return ['root:test@tcp({})/'.format(self.compose_host())]
+        return [f'root:test@tcp({self.compose_host()})/']

@@ -11,8 +11,8 @@ class Test(BaseTest):
                             debug_selectors=["mysql,publish"])
 
         objs = self.read_output()
-        assert all([o["type"] == "mysql" for o in objs])
-        assert all([o["server.port"] == 3307 for o in objs])
+        assert all(o["type"] == "mysql" for o in objs)
+        assert all(o["server.port"] == 3307 for o in objs)
         assert len(objs) == 2
 
         assert objs[1]["method"] == "SELECT"
@@ -20,5 +20,5 @@ class Test(BaseTest):
         assert objs[1]["params"][0] == "A1224638"
         assert objs[1]["mysql.num_rows"] == 1
 
-        assert all(["source.bytes" in list(o.keys()) for o in objs])
-        assert all(["destination.bytes" in list(o.keys()) for o in objs])
+        assert all("source.bytes" in list(o.keys()) for o in objs)
+        assert all("destination.bytes" in list(o.keys()) for o in objs)

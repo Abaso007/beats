@@ -17,8 +17,7 @@ class Test(BaseTest):
         status_code = int(status_code)
         server = self.start_server("hello world", status_code)
 
-        self.render_http_config(
-            ["localhost:{}".format(server.server_port)])
+        self.render_http_config([f"localhost:{server.server_port}"])
 
         proc = self.start_beat()
         self.wait_until(lambda: self.log_contains("heartbeat is running"))
@@ -47,8 +46,7 @@ class Test(BaseTest):
         status_code = int(status_code)
         server = self.start_server("hello world", status_code)
 
-        self.render_http_config_with_hosts(
-            ["localhost:{}".format(server.server_port)])
+        self.render_http_config_with_hosts([f"localhost:{server.server_port}"])
 
         proc = self.start_beat()
         self.wait_until(lambda: self.log_contains("heartbeat is running"))
@@ -77,8 +75,7 @@ class Test(BaseTest):
             delay = 1.0
             server = self.start_server("sloooow body", 200, write_delay=delay)
 
-            self.render_http_config(
-                ["http://localhost:{}".format(server.server_port)])
+            self.render_http_config([f"http://localhost:{server.server_port}"])
 
             try:
                 proc = self.start_beat()
@@ -102,16 +99,18 @@ class Test(BaseTest):
         server = self.start_server(body, 200)
         try:
             self.render_config_template(
-                monitors=[{
-                    "type": "http",
-                    "urls": ["http://localhost:{}".format(server.server_port)],
-                    "check_response_json": [{
-                        "description": "foo equals bar",
-                        "condition": {
-                            "equals": {"foo": {"baz": "bar"}}
-                        }
-                    }]
-                }]
+                monitors=[
+                    {
+                        "type": "http",
+                        "urls": [f"http://localhost:{server.server_port}"],
+                        "check_response_json": [
+                            {
+                                "description": "foo equals bar",
+                                "condition": {"equals": {"foo": {"baz": "bar"}}},
+                            }
+                        ],
+                    }
+                ]
             )
 
             try:
@@ -143,16 +142,18 @@ class Test(BaseTest):
         server = self.start_server(body, 200)
         try:
             self.render_config_template(
-                monitors=[{
-                    "type": "http",
-                    "urls": ["http://localhost:{}".format(server.server_port)],
-                    "check_response_json": [{
-                        "description": body,
-                        "condition": {
-                            "equals": comparison
-                        }
-                    }]
-                }]
+                monitors=[
+                    {
+                        "type": "http",
+                        "urls": [f"http://localhost:{server.server_port}"],
+                        "check_response_json": [
+                            {
+                                "description": body,
+                                "condition": {"equals": comparison},
+                            }
+                        ],
+                    }
+                ]
             )
 
             try:
@@ -168,11 +169,7 @@ class Test(BaseTest):
         finally:
             server.shutdown()
 
-    @parameterized.expand([
-        (lambda server: "localhost:{}".format(server.server_port), "up"),
-        # This IP is reserved in IPv4
-        (lambda server: "203.0.113.1:1233", "down"),
-    ])
+    @parameterized.expand([(lambda server: f"localhost:{server.server_port}", "up"), (lambda server: "203.0.113.1:1233", "down")])
     def test_tcp(self, url, status):
         """
         Test tcp server

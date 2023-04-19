@@ -18,7 +18,9 @@ class Test(BaseTest):
             cfg_file = "test.yml"
 
             self.write_dyn_config(
-                cfg_file, self.http_cfg("myid", "http://localhost:{}".format(server.server_port)))
+                cfg_file,
+                self.http_cfg("myid", f"http://localhost:{server.server_port}"),
+            )
 
             self.wait_until(lambda: self.output_has(lines=1))
 
@@ -47,7 +49,9 @@ class Test(BaseTest):
             cfg_file = "test.yml"
 
             self.write_dyn_config(
-                cfg_file, self.http_cfg("myid", "http://localhost:{}".format(server.server_port)))
+                cfg_file,
+                self.http_cfg("myid", f"http://localhost:{server.server_port}"),
+            )
 
             self.wait_until(lambda: self.output_has(lines=2))
 
@@ -77,7 +81,9 @@ class Test(BaseTest):
         server = self.start_server("hello world", 200)
         try:
             self.write_dyn_config(
-                "test.yml", self.http_cfg("myid", "http://localhost:{}".format(server.server_port)))
+                "test.yml",
+                self.http_cfg("myid", f"http://localhost:{server.server_port}"),
+            )
 
             # The beat should recognize there is a new runner to start.
             self.wait_until(lambda: self.log_contains(

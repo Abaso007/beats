@@ -8,13 +8,13 @@ class IdxMgmt(unittest.TestCase):
 
     def __init__(self, client, index):
         self._client = client
-        self._index = index if index != '' and index != '*' else 'mockbeat'
+        self._index = index if index not in ['', '*'] else 'mockbeat'
 
     def needs_init(self, s):
-        return s == '' or s == '*'
+        return s in ['', '*']
 
     def delete(self, indices=[], policies=[]):
-        indices = list([x for x in indices if x != ''])
+        indices = [x for x in indices if x != '']
         if not indices:
             indices == [self._index]
         for i in indices:
@@ -28,7 +28,7 @@ class IdxMgmt(unittest.TestCase):
             index = self._index
 
         try:
-            self._client.transport.perform_request('DELETE', "/" + index + "*")
+            self._client.transport.perform_request('DELETE', f"/{index}*")
         except NotFoundError:
             pass
 
@@ -37,7 +37,7 @@ class IdxMgmt(unittest.TestCase):
             template = self._index
 
         try:
-            self._client.transport.perform_request('DELETE', "/_template/" + template + "*")
+            self._client.transport.perform_request('DELETE', f"/_template/{template}*")
         except NotFoundError:
             pass
 
@@ -48,26 +48,26 @@ class IdxMgmt(unittest.TestCase):
             if not p.startswith(policy):
                 continue
             try:
-                self._client.transport.perform_request('DELETE', "/_ilm/policy/" + p)
+                self._client.transport.perform_request('DELETE', f"/_ilm/policy/{p}")
             except NotFoundError:
                 pass
 
     @raises(NotFoundError)
     def assert_index_template_not_loaded(self, template):
-        self._client.transport.perform_request('GET', '/_template/' + template)
+        self._client.transport.perform_request('GET', f'/_template/{template}')
 
     def assert_index_template_loaded(self, template):
-        resp = self._client.transport.perform_request('GET', '/_template/' + template)
+        resp = self._client.transport.perform_request('GET', f'/_template/{template}')
         assert template in resp
         assert "lifecycle" not in resp[template]["settings"]["index"]
 
     def assert_ilm_template_loaded(self, template, policy, alias):
-        resp = self._client.transport.perform_request('GET', '/_template/' + template)
+        resp = self._client.transport.perform_request('GET', f'/_template/{template}')
         assert resp[template]["settings"]["index"]["lifecycle"]["name"] == policy
         assert resp[template]["settings"]["index"]["lifecycle"]["rollover_alias"] == alias
 
     def assert_index_template_index_pattern(self, template, index_pattern):
-        resp = self._client.transport.perform_request('GET', '/_template/' + template)
+        resp = self._client.transport.perform_request('GET', f'/_template/{template}')
         assert template in resp
         assert resp[template]["index_patterns"] == index_pattern
 
@@ -81,17 +81,17 @@ class IdxMgmt(unittest.TestCase):
     def assert_alias_created(self, alias, pattern=None):
         if pattern is None:
             pattern = self.default_pattern()
-        name = alias + "-" + pattern
-        resp = self._client.transport.perform_request('GET', '/_alias/' + alias)
+        name = f"{alias}-{pattern}"
+        resp = self._client.transport.perform_request('GET', f'/_alias/{alias}')
         assert name in resp
         assert resp[name]["aliases"][alias]["is_write_index"] == True
 
     @raises(NotFoundError)
     def assert_policy_not_created(self, policy):
-        self._client.transport.perform_request('GET', '/_ilm/policy/' + policy)
+        self._client.transport.perform_request('GET', f'/_ilm/policy/{policy}')
 
     def assert_policy_created(self, policy):
-        resp = self._client.transport.perform_request('GET', '/_ilm/policy/' + policy)
+        resp = self._client.transport.perform_request('GET', f'/_ilm/policy/{policy}')
         assert policy in resp
         assert resp[policy]["policy"]["phases"]["hot"]["actions"]["rollover"]["max_size"] == "50gb"
         assert resp[policy]["policy"]["phases"]["hot"]["actions"]["rollover"]["max_age"] == "30d"
@@ -103,15 +103,15 @@ class IdxMgmt(unittest.TestCase):
 
         if pattern is None:
             pattern = self.default_pattern()
-        name = alias + "-" + pattern
-        data = self._client.transport.perform_request('GET', '/' + name + '/_search')
+        name = f"{alias}-{pattern}"
+        data = self._client.transport.perform_request('GET', f'/{name}/_search')
         self.assertGreater(data["hits"]["total"]["value"], 0)
 
     def default_pattern(self):
         d = datetime.datetime.now().strftime("%Y.%m.%d")
-        return d + "-000001"
+        return f"{d}-000001"
 
     def index_for(self, alias, pattern=None):
         if pattern is None:
             pattern = self.default_pattern()
-        return "{}-{}".format(alias, pattern)
+        return f"{alias}-{pattern}"

@@ -14,7 +14,7 @@ class Test(BaseTest):
 
     def init(self):
         self.elasticsearch_url = self.get_elasticsearch_url()
-        print("Using elasticsearch: {}".format(self.elasticsearch_url))
+        print(f"Using elasticsearch: {self.elasticsearch_url}")
         self.es = Elasticsearch([self.elasticsearch_url])
 
     @unittest.skipIf(not INTEGRATION_TESTS,
@@ -39,25 +39,34 @@ class Test(BaseTest):
             extra_args=[
                 "setup",
                 "--pipelines",
-                "-E", "filebeat.config.modules.path=" + self.working_dir + "/modules.d/*.yml",
-            ],
+                "-E",
+                f"filebeat.config.modules.path={self.working_dir}/modules.d/*.yml",
+            ]
         )
         beat_setup_modules_pipelines.check_wait(exit_code=0)
 
         version = self.get_beat_version()
-        pipeline_name = "filebeat-" + version + "-template-test-module-test-pipeline"
-        pipeline = self.es.transport.perform_request("GET", "/_ingest/pipeline/" + pipeline_name)
+        pipeline_name = f"filebeat-{version}-template-test-module-test-pipeline"
+        pipeline = self.es.transport.perform_request(
+            "GET", f"/_ingest/pipeline/{pipeline_name}"
+        )
 
         assert "date" in pipeline[pipeline_name]["processors"][0]
         assert "remove" in pipeline[pipeline_name]["processors"][1]
 
     def _setup_dummy_module(self):
-        modules_d_path = self.working_dir + "/modules.d"
-        modules_path = self.working_dir + "/module"
+        modules_d_path = f"{self.working_dir}/modules.d"
+        modules_path = f"{self.working_dir}/module"
 
         for directory in [modules_d_path, modules_path]:
             if not os.path.isdir(directory):
                 os.mkdir(directory)
 
-        copytree(self.beat_path + "/tests/system/input/template-test-module", modules_path + "/template-test-module")
-        copyfile(self.beat_path + "/tests/system/input/template-test-module/_meta/config.yml", modules_d_path + "/test.yml")
+        copytree(
+            f"{self.beat_path}/tests/system/input/template-test-module",
+            f"{modules_path}/template-test-module",
+        )
+        copyfile(
+            f"{self.beat_path}/tests/system/input/template-test-module/_meta/config.yml",
+            f"{modules_d_path}/test.yml",
+        )

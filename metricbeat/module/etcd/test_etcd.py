@@ -24,4 +24,6 @@ class Test(metricbeat.BaseTest):
         """
         etcd metricset tests
         """
-        self.check_metricset("etcd", metricset, self.get_hosts(), ['etcd.' + metricset])
+        self.check_metricset(
+            "etcd", metricset, self.get_hosts(), [f'etcd.{metricset}']
+        )

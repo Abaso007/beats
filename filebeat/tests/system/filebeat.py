@@ -14,13 +14,13 @@ default_registry_file = 'registry/filebeat/data.json'
 class BaseTest(TestCase):
 
     @classmethod
-    def setUpClass(self):
-        if not hasattr(self, "beat_name"):
-            self.beat_name = "filebeat"
-        if not hasattr(self, "beat_path"):
-            self.beat_path = os.path.abspath(os.path.join(curdir, "../../"))
+    def setUpClass(cls):
+        if not hasattr(cls, "beat_name"):
+            cls.beat_name = "filebeat"
+        if not hasattr(cls, "beat_path"):
+            cls.beat_path = os.path.abspath(os.path.join(curdir, "../../"))
 
-        super(BaseTest, self).setUpClass()
+        super(BaseTest, cls).setUpClass()
 
     @property
     def registry(self):
@@ -39,7 +39,7 @@ class BaseTest(TestCase):
         return Registry(data_path, name)
 
     def log_access(self, file=None):
-        file = file if file else self.beat_name + ".log"
+        file = file if file else f"{self.beat_name}.log"
         return LogState(os.path.join(self.working_dir, file))
 
     def has_registry(self, name=None, data_path=None):
@@ -120,9 +120,7 @@ class Registry:
         return entries
 
     def count(self, filter=None):
-        if not self.exists():
-            return 0
-        return len(self.load(filter=filter))
+        return len(self.load(filter=filter)) if self.exists() else 0
 
 
 class LogState:

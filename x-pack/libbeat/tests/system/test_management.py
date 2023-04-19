@@ -30,7 +30,7 @@ class TestManagement(BaseTest):
         self.es_user = "myelastic"
         self.es_pass = "changeme"
         self.es = Elasticsearch([self.get_elasticsearch_url()], verify_certs=True)
-        self.keystore_path = self.working_dir + "/data/keystore"
+        self.keystore_path = f"{self.working_dir}/data/keystore"
 
         if path.exists(self.keystore_path):
             os.Remove(self.keystore_path)
@@ -42,7 +42,7 @@ class TestManagement(BaseTest):
         Enroll the beat in Kibana Central Management
         """
 
-        assert len(glob.glob(os.path.join(self.working_dir, "mockbeat.yml.*.bak"))) == 0
+        assert not glob.glob(os.path.join(self.working_dir, "mockbeat.yml.*.bak"))
 
         # We don't care about this as it will be replaced by enrollment
         # process:
@@ -125,10 +125,14 @@ class TestManagement(BaseTest):
         ])
 
         # Start beat
-        proc = self.start_beat(extra_args=[
-            "-E", "management.period=1s",
-            "-E", "keystore.path=%s" % self.keystore_path,
-        ])
+        proc = self.start_beat(
+            extra_args=[
+                "-E",
+                "management.period=1s",
+                "-E",
+                f"keystore.path={self.keystore_path}",
+            ]
+        )
 
         # Wait for beat to apply new conf
         self.wait_log_contains("Applying settings for output")
@@ -188,10 +192,14 @@ class TestManagement(BaseTest):
         ])
 
         # Start beat
-        proc = self.start_beat(extra_args=[
-            "-E", "management.period=1s",
-            "-E", "keystore.path=%s" % self.keystore_path,
-        ])
+        proc = self.start_beat(
+            extra_args=[
+                "-E",
+                "management.period=1s",
+                "-E",
+                f"keystore.path={self.keystore_path}",
+            ]
+        )
 
         self.wait_until(lambda: self.log_contains("PublishEvents: "), max_timeout=TIMEOUT)
         self.wait_documents(index, 1)
@@ -201,12 +209,18 @@ class TestManagement(BaseTest):
         self.es.indices.delete(index)
 
         # Cache should exists already, start with wrong kibana settings:
-        proc = self.start_beat(extra_args=[
-            "-E", "management.period=1s",
-            "-E", "management.kibana.host=wronghost",
-            "-E", "management.kibana.timeout=0.5s",
-            "-E", "keystore.path=%s" % self.keystore_path,
-        ])
+        proc = self.start_beat(
+            extra_args=[
+                "-E",
+                "management.period=1s",
+                "-E",
+                "management.kibana.host=wronghost",
+                "-E",
+                "management.kibana.timeout=0.5s",
+                "-E",
+                f"keystore.path={self.keystore_path}",
+            ]
+        )
 
         self.wait_until(lambda: self.log_contains("PublishEvents: "), max_timeout=TIMEOUT)
         self.wait_documents(index, 1)
@@ -227,7 +241,7 @@ class TestManagement(BaseTest):
         }
 
         # Create tag
-        url = self.get_kibana_url() + "/api/status"
+        url = f"{self.get_kibana_url()}/api/status"
 
         r = requests.get(url, headers=headers,
                          auth=(self.es_user, self.es_pass))
@@ -239,7 +253,7 @@ class TestManagement(BaseTest):
         }
 
         # Create tag
-        url = self.get_kibana_url() + "/api/beats/tag/" + tag_name
+        url = f"{self.get_kibana_url()}/api/beats/tag/{tag_name}"
         data = {
             "color": "#DD0A73",
             "name": tag_name,
@@ -247,16 +261,16 @@ class TestManagement(BaseTest):
 
         r = requests.put(url, json=data, headers=headers,
                          auth=(self.es_user, self.es_pass))
-        assert r.status_code in (200, 201)
+        assert r.status_code in {200, 201}
 
         # Create blocks
-        url = self.get_kibana_url() + "/api/beats/configurations"
+        url = f"{self.get_kibana_url()}/api/beats/configurations"
         for b in blocks:
             b["tag"] = tag_name
 
         r = requests.put(url, json=blocks, headers=headers,
                          auth=(self.es_user, self.es_pass))
-        assert r.status_code in (200, 201)
+        assert r.status_code in {200, 201}
 
         # Retrieve beat ID
         meta = json.loads(
@@ -264,20 +278,25 @@ class TestManagement(BaseTest):
 
         # Assign tag to beat
         data = {"assignments": [{"beatId": meta["uuid"], "tag": tag_name}]}
-        url = self.get_kibana_url() + "/api/beats/agents_tags/assignments"
+        url = f"{self.get_kibana_url()}/api/beats/agents_tags/assignments"
         r = requests.post(url, json=data, headers=headers,
                           auth=(self.es_user, self.es_pass))
 
         assert r.status_code == 200
 
     def get_elasticsearch_url(self):
-        return 'http://' + self.es_user + ":" + self.es_pass + '@' + os.getenv('ES_HOST', 'localhost') + ':' + os.getenv('ES_PORT', '5601')
+        return (
+            f'http://{self.es_user}:{self.es_pass}@'
+            + os.getenv('ES_HOST', 'localhost')
+            + ':'
+            + os.getenv('ES_PORT', '5601')
+        )
 
     def get_kibana_url(self):
         return 'http://' + os.getenv('KIBANA_HOST', 'kibana') + ':' + os.getenv('KIBANA_PORT', '5601')
 
     def random_index(self):
-        return ''.join(random.choice(string.ascii_lowercase) for i in range(10))
+        return ''.join(random.choice(string.ascii_lowercase) for _ in range(10))
 
     def check_document_count(self, index, count):
         try:

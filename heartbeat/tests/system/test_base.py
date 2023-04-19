@@ -24,8 +24,7 @@ class Test(BaseTest):
         }
 
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
-            **config
+            path=f"{os.path.abspath(self.working_dir)}/log/*", **config
         )
 
         heartbeat_proc = self.start_beat()
@@ -99,8 +98,7 @@ class Test(BaseTest):
         }
 
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/*",
-            **config
+            path=f"{os.path.abspath(self.working_dir)}/*", **config
         )
 
         heartbeat_proc = self.start_beat()
@@ -116,17 +114,16 @@ class Test(BaseTest):
             "urls": ["http://localhost:9200"],
         }
         if local:
-            monitor.update(local)
+            monitor |= local
 
         config = {
             "monitors": [monitor]
         }
         if top:
-            config.update(top)
+            config |= top
 
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/*",
-            **config
+            path=f"{os.path.abspath(self.working_dir)}/*", **config
         )
 
         heartbeat_proc = self.start_beat()
@@ -183,5 +180,5 @@ class Test(BaseTest):
             nose.tools.assert_equal(
                 output["event.dataset"],
                 "uptime",
-                "Check for event.dataset in {} failed".format(output)
+                f"Check for event.dataset in {output} failed",
             )

@@ -19,7 +19,7 @@ class Test(BaseTest):
         objs = self.read_output()
 
         assert len(objs) == 3
-        assert all([o["type"] == "http" for o in objs])
+        assert all(o["type"] == "http" for o in objs)
 
         assert objs[0]["status"] == "OK"
         assert objs[1]["status"] == "OK"
@@ -45,7 +45,7 @@ class Test(BaseTest):
         objs = self.read_output(required_fields=["@timestamp", "type"])
 
         assert len(objs) == 3
-        assert all([o["type"] == "http" for o in objs])
+        assert all(o["type"] == "http" for o in objs)
 
         assert "http.request.headers" not in objs[0]
         assert "http.response.headers" not in objs[0]
@@ -77,7 +77,7 @@ class Test(BaseTest):
         objs = self.read_output(required_fields=["@timestamp", "type"])
 
         assert len(objs) == 3
-        assert all([o["type"] == "http" for o in objs])
+        assert all(o["type"] == "http" for o in objs)
 
         assert "http.request.headers" in objs[0]
         assert "http.response.headers" in objs[0]
@@ -113,7 +113,7 @@ class Test(BaseTest):
         objs = self.read_output(required_fields=["@timestamp", "type"])
 
         assert len(objs) == 3
-        assert all([o["type"] == "http" for o in objs])
+        assert all(o["type"] == "http" for o in objs)
 
         print(objs[0])
         assert "response" not in objs[0]
@@ -144,9 +144,9 @@ class Test(BaseTest):
 
         print(objs)
         assert len(objs) == 2
-        assert all([o["type"] == "http" for o in objs])
+        assert all(o["type"] == "http" for o in objs)
 
-        assert all([o["http.response.status_code"] > 300 for o in objs])
+        assert all(o["http.response.status_code"] > 300 for o in objs)
 
     def test_drop_end_fields(self):
 
@@ -164,7 +164,7 @@ class Test(BaseTest):
         objs = self.read_output()
 
         assert len(objs) == 3
-        assert all([o["type"] == "http" for o in objs])
+        assert all(o["type"] == "http" for o in objs)
 
         assert objs[0]["status"] == "OK"
         assert objs[1]["status"] == "OK"
@@ -193,7 +193,7 @@ class Test(BaseTest):
         objs = self.read_output()
 
         assert len(objs) == 3
-        assert all([o["type"] == "http" for o in objs])
+        assert all(o["type"] == "http" for o in objs)
 
         assert objs[0]["status"] == "OK"
         assert objs[1]["status"] == "OK"
@@ -261,7 +261,7 @@ class Test(BaseTest):
         objs = self.read_output()
 
         assert len(objs) == 3
-        assert all([o["type"] == "http" for o in objs])
+        assert all(o["type"] == "http" for o in objs)
 
         assert objs[0]["status"] == "OK"
         assert objs[1]["status"] == "OK"
@@ -289,7 +289,7 @@ class Test(BaseTest):
         )
 
         assert len(objs) == 3
-        assert all([o["type"] == "http" for o in objs])
+        assert all(o["type"] == "http" for o in objs)
 
         assert "http.request.headers" in objs[0]
         assert "http.response.headers" in objs[0]
@@ -320,7 +320,7 @@ class Test(BaseTest):
         )
 
         assert len(objs) == 3
-        assert all([o["type"] == "http" for o in objs])
+        assert all(o["type"] == "http" for o in objs)
 
         assert "http.request.headers" not in objs[0]
         assert "http.response.headers" not in objs[0]
@@ -351,7 +351,7 @@ class Test(BaseTest):
         )
 
         assert len(objs) == 3
-        assert all([o["type"] == "http" for o in objs])
+        assert all(o["type"] == "http" for o in objs)
 
         assert "method" not in objs[0]
 
@@ -378,7 +378,7 @@ class Test(BaseTest):
 
         print(objs)
         assert len(objs) == 1
-        assert all([o["type"] == "http" for o in objs])
+        assert all(o["type"] == "http" for o in objs)
 
     def test_condition_not(self):
 
@@ -398,4 +398,4 @@ class Test(BaseTest):
         )
 
         assert len(objs) == 1
-        assert all([o["type"] == "http" for o in objs])
+        assert all(o["type"] == "http" for o in objs)

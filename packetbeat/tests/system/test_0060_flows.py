@@ -191,12 +191,22 @@ class Test(BaseTest):
     def test_community_id_ipv4_tcp(self):
         objs = self.check_community_id("tcp.pcap")
 
-        all([self.assertEqual(o["network.community_id"], "1:LQU9qZlK+B5F3KDmev6m5PMibrg=") for o in objs])
+        all(
+            self.assertEqual(
+                o["network.community_id"], "1:LQU9qZlK+B5F3KDmev6m5PMibrg="
+            )
+            for o in objs
+        )
 
     def test_community_id_ipv4_udp(self):
         objs = self.check_community_id("udp.pcap")
 
-        all([self.assertEqual(o["network.community_id"], "1:d/FP5EW3wiY1vCndhwleRRKHowQ=") for o in objs])
+        all(
+            self.assertEqual(
+                o["network.community_id"], "1:d/FP5EW3wiY1vCndhwleRRKHowQ="
+            )
+            for o in objs
+        )
 
     def check_community_id(self, pcap):
         self.render_config_template(
@@ -212,8 +222,6 @@ class Test(BaseTest):
             pcap=os.path.join("../../../../libbeat/common/flowhash/testdata/pcap", pcap),
             debug_selectors=["*"])
 
-        objs = self.read_output(
-            types=["flow"],
-            required_fields=FLOWS_REQUIRED_FIELDS)
-
-        return objs
+        return self.read_output(
+            types=["flow"], required_fields=FLOWS_REQUIRED_FIELDS
+        )

@@ -12,7 +12,7 @@ class Test(BaseTest):
     def init(self):
         self.elasticsearch_url = self.get_elasticsearch_url()
         self.kibana_url = self.get_kibana_url()
-        print("Using elasticsearch: {}".format(self.elasticsearch_url))
+        print(f"Using elasticsearch: {self.elasticsearch_url}")
         self.es = Elasticsearch([self.elasticsearch_url])
         logging.getLogger("urllib3").setLevel(logging.WARNING)
         logging.getLogger("elasticsearch").setLevel(logging.ERROR)
@@ -54,19 +54,18 @@ class Test(BaseTest):
         self.es.transport.perform_request('PUT', "/_cluster/settings", body=body)
 
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             elasticsearch=dict(
-                host=self.elasticsearch_url,
-                pipeline="estest",
-                index=index_name),
+                host=self.elasticsearch_url, pipeline="estest", index=index_name
+            ),
             pipeline="test",
             setup_template_name=index_name,
-            setup_template_pattern=index_name + "*",
+            setup_template_pattern=f"{index_name}*",
             ilm={"enabled": False},
         )
 
-        os.mkdir(self.working_dir + "/log/")
-        testfile = self.working_dir + "/log/test.log"
+        os.mkdir(f"{self.working_dir}/log/")
+        testfile = f"{self.working_dir}/log/test.log"
         with open(testfile, 'a') as file:
             file.write("Hello World1\n")
 

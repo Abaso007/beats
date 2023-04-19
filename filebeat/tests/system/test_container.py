@@ -22,7 +22,7 @@ class Test(BaseTest):
             inputs=False,
         )
 
-        os.mkdir(self.working_dir + "/logs/")
+        os.mkdir(f"{self.working_dir}/logs/")
         self.copy_files(["logs/docker.log"],
                         target_dir="logs")
 
@@ -52,7 +52,7 @@ class Test(BaseTest):
             inputs=False,
         )
 
-        os.mkdir(self.working_dir + "/logs/")
+        os.mkdir(f"{self.working_dir}/logs/")
         self.copy_files(["logs/cri.log"],
                         target_dir="logs")
 

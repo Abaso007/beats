@@ -47,4 +47,4 @@ class Test(XPackTest):
             self.assertGreater(len(evt["prometheus"]["metrics"].keys()), 0)
 
             for metric in evt["prometheus"]["metrics"].keys():
-                assert metric.startswith(metric_name_prefix + "_")
+                assert metric.startswith(f"{metric_name_prefix}_")

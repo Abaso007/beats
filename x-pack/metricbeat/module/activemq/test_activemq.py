@@ -37,10 +37,10 @@ class ActiveMqTest(XPackTest):
             return False
 
         output = self.read_output_json()
-        for evt in output:
-            if self.all_messages_enqueued(evt, destination_type, destination_name):
-                return True
-        return False
+        return any(
+            self.all_messages_enqueued(evt, destination_type, destination_name)
+            for evt in output
+        )
 
     def verify_destination_metrics_collection(self, destination_type):
         from stomp import Connection
@@ -48,13 +48,15 @@ class ActiveMqTest(XPackTest):
         self.render_config_template(modules=[self.get_activemq_module_config(destination_type)])
         proc = self.start_beat(home=self.beat_path)
 
-        destination_name = ''.join(random.choice(string.ascii_lowercase) for i in range(10))
+        destination_name = ''.join(
+            random.choice(string.ascii_lowercase) for _ in range(10)
+        )
 
         conn = Connection([self.get_stomp_host_port()])
         conn.start()
         conn.connect(wait=True)
-        conn.send('/{}/{}'.format(destination_type, destination_name), 'first message')
-        conn.send('/{}/{}'.format(destination_type, destination_name), 'second message')
+        conn.send(f'/{destination_type}/{destination_name}', 'first message')
+        conn.send(f'/{destination_type}/{destination_name}', 'second message')
 
         self.wait_until(lambda: self.destination_metrics_collected(destination_type, destination_name))
         proc.check_kill_and_wait()
@@ -73,8 +75,12 @@ class ActiveMqTest(XPackTest):
         assert passed
 
     def all_messages_enqueued(self, evt, destination_type, destination_name):
-        return destination_type in evt['activemq'] and destination_name == evt['activemq'][destination_type]['name'] \
-            and 2 == evt['activemq'][destination_type]['messages']['enqueue']['count']
+        return (
+            destination_type in evt['activemq']
+            and destination_name == evt['activemq'][destination_type]['name']
+            and evt['activemq'][destination_type]['messages']['enqueue']['count']
+            == 2
+        )
 
     @unittest.skipUnless(metricbeat.INTEGRATION_TESTS, 'integration test')
     def test_broker_metrics_collected(self):

@@ -16,10 +16,10 @@ class TestRunILM(BaseTest):
     def setUp(self):
         super(TestRunILM, self).setUp()
 
-        self.alias_name = self.index_name = self.beat_name + "-9.9.9"
+        self.alias_name = self.index_name = f"{self.beat_name}-9.9.9"
         self.policy_name = self.beat_name
-        self.custom_alias = self.beat_name + "_foo"
-        self.custom_policy = self.beat_name + "_bar"
+        self.custom_alias = f"{self.beat_name}_foo"
+        self.custom_policy = f"{self.beat_name}_bar"
         self.es = self.es_client()
         self.idxmgmt = IdxMgmt(self.es, self.index_name)
         self.idxmgmt.delete(indices=[self.custom_alias, self.index_name, self.custom_policy],
@@ -78,7 +78,7 @@ class TestRunILM(BaseTest):
         Test setting ilm policy name
         """
 
-        policy_name = self.beat_name + "_foo"
+        policy_name = f"{self.beat_name}_foo"
         self.render_config(ilm={"enabled": True, "policy_name": policy_name})
 
         proc = self.start_beat()
@@ -163,10 +163,10 @@ class TestCommandSetupILMPolicy(BaseTest):
 
         self.setupCmd = "--index-management"
 
-        self.alias_name = self.index_name = self.beat_name + "-9.9.9"
+        self.alias_name = self.index_name = f"{self.beat_name}-9.9.9"
         self.policy_name = self.beat_name
-        self.custom_alias = self.beat_name + "_foo"
-        self.custom_policy = self.beat_name + "_bar"
+        self.custom_alias = f"{self.beat_name}_foo"
+        self.custom_policy = f"{self.beat_name}_bar"
         self.es = self.es_client()
         self.idxmgmt = IdxMgmt(self.es, self.index_name)
         self.idxmgmt.delete(indices=[self.custom_alias, self.index_name, self.custom_policy],
@@ -216,7 +216,9 @@ class TestCommandSetupILMPolicy(BaseTest):
 
         assert exit_code == 0
         self.idxmgmt.assert_ilm_template_loaded(self.alias_name, self.policy_name, self.alias_name)
-        self.idxmgmt.assert_index_template_index_pattern(self.alias_name, [self.alias_name + "-*"])
+        self.idxmgmt.assert_index_template_index_pattern(
+            self.alias_name, [f"{self.alias_name}-*"]
+        )
         self.idxmgmt.assert_alias_created(self.alias_name)
         self.idxmgmt.assert_policy_created(self.policy_name)
 
@@ -245,9 +247,15 @@ class TestCommandSetupILMPolicy(BaseTest):
         """
         self.render_config()
 
-        exit_code = self.run_beat(logging_args=["-v", "-d", "*"],
-                                  extra_args=["setup", self.setupCmd,
-                                              "-E", "setup.ilm.policy_name=" + self.custom_policy])
+        exit_code = self.run_beat(
+            logging_args=["-v", "-d", "*"],
+            extra_args=[
+                "setup",
+                self.setupCmd,
+                "-E",
+                f"setup.ilm.policy_name={self.custom_policy}",
+            ],
+        )
 
         assert exit_code == 0
         self.idxmgmt.assert_ilm_template_loaded(self.alias_name, self.custom_policy, self.alias_name)
@@ -261,9 +269,15 @@ class TestCommandSetupILMPolicy(BaseTest):
         """
         self.render_config()
 
-        exit_code = self.run_beat(logging_args=["-v", "-d", "*"],
-                                  extra_args=["setup", self.setupCmd,
-                                              "-E", "setup.ilm.rollover_alias=" + self.custom_alias])
+        exit_code = self.run_beat(
+            logging_args=["-v", "-d", "*"],
+            extra_args=[
+                "setup",
+                self.setupCmd,
+                "-E",
+                f"setup.ilm.rollover_alias={self.custom_alias}",
+            ],
+        )
 
         assert exit_code == 0
         self.idxmgmt.assert_ilm_template_loaded(self.custom_alias, self.policy_name, self.custom_alias)
@@ -322,8 +336,15 @@ class TestCommandExportILMPolicy(BaseTest):
         """
         policy_name = "foo"
 
-        exit_code = self.run_beat(extra_args=["export", self.cmd, "-E", "setup.ilm.policy_name=" + policy_name],
-                                  config=self.config)
+        exit_code = self.run_beat(
+            extra_args=[
+                "export",
+                self.cmd,
+                "-E",
+                f"setup.ilm.policy_name={policy_name}",
+            ],
+            config=self.config,
+        )
 
         assert exit_code == 0
         self.assert_log_contains_policy()
@@ -335,12 +356,13 @@ class TestCommandExportILMPolicy(BaseTest):
         """
         base_path = os.path.abspath(os.path.join(self.beat_path, os.path.dirname(__file__), "export"))
         exit_code = self.run_beat(
-            extra_args=["export", self.cmd, "--dir=" + base_path],
-            config=self.config)
+            extra_args=["export", self.cmd, f"--dir={base_path}"],
+            config=self.config,
+        )
 
         assert exit_code == 0
 
-        file = os.path.join(base_path, "policy", self.policy_name + '.json')
+        file = os.path.join(base_path, "policy", f'{self.policy_name}.json')
         with open(file) as f:
             policy = json.load(f)
         assert policy["policy"]["phases"]["hot"]["actions"]["rollover"]["max_size"] == "50gb", policy
@@ -354,13 +376,13 @@ class TestCommandExportILMPolicy(BaseTest):
         """
         path = os.path.join(os.path.dirname(__file__), "export")
         exit_code = self.run_beat(
-            extra_args=["export", self.cmd, "--dir=" + path],
-            config=self.config)
+            extra_args=["export", self.cmd, f"--dir={path}"], config=self.config
+        )
 
         assert exit_code == 0
 
         base_path = os.path.abspath(os.path.join(self.beat_path, os.path.dirname(__file__), "export"))
-        file = os.path.join(base_path, "policy", self.policy_name + '.json')
+        file = os.path.join(base_path, "policy", f'{self.policy_name}.json')
         with open(file) as f:
             policy = json.load(f)
         assert policy["policy"]["phases"]["hot"]["actions"]["rollover"]["max_size"] == "50gb", policy

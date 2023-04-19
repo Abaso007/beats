@@ -14,11 +14,11 @@ class Test(BaseTest):
         Should be able to interpret docker logs.
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
-            json=dict(message_key="log")
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
+            json=dict(message_key="log"),
         )
 
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
         self.copy_files(["logs/docker.log"],
                         target_dir="log")
 
@@ -40,12 +40,12 @@ class Test(BaseTest):
         Should be able to do line filtering on docker logs.
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             json=dict(message_key="log", keys_under_root=True),
-            exclude_lines=["windows"]
+            exclude_lines=["windows"],
         )
 
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
         self.copy_files(["logs/docker.log"],
                         target_dir="log")
 
@@ -67,15 +67,14 @@ class Test(BaseTest):
         Should be able to overwrite keys when requested.
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             json=dict(
-                message_key="message",
-                keys_under_root=True,
-                overwrite_keys=True),
-            exclude_lines=["windows"]
+                message_key="message", keys_under_root=True, overwrite_keys=True
+            ),
+            exclude_lines=["windows"],
         )
 
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
         self.copy_files(["logs/json_override.log"],
                         target_dir="log")
 
@@ -92,13 +91,13 @@ class Test(BaseTest):
 
     def test_json_add_tags(self):
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             json=dict(
                 keys_under_root=True,
             ),
-            agent_tags=["tag3", "tag4"]
+            agent_tags=["tag3", "tag4"],
         )
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
         self.copy_files(["logs/json_tag.log"],
                         target_dir="log")
 
@@ -118,10 +117,9 @@ class Test(BaseTest):
         but the message key is not defined.
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
-            json=dict(
-                keys_under_root=True),
-            exclude_lines=["windows"]
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
+            json=dict(keys_under_root=True),
+            exclude_lines=["windows"],
         )
 
         proc = self.start_beat()
@@ -137,12 +135,11 @@ class Test(BaseTest):
         but the message key is not defined.
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
-            json=dict(
-                keys_under_root=True),
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
+            json=dict(keys_under_root=True),
             multiline=True,
             match="after",
-            pattern="^\\["
+            pattern="^\\[",
         )
 
         proc = self.start_beat()
@@ -158,14 +155,14 @@ class Test(BaseTest):
         message.
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             json=dict(
                 keys_under_root=True,
                 overwrite_keys=True,
                 add_error_key=True,
             ),
         )
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
         self.copy_files(["logs/json_timestamp.log"],
                         target_dir="log")
 
@@ -182,10 +179,10 @@ class Test(BaseTest):
 
         assert output[1]["@timestamp"] != "invalid"
         assert output[1]["error.message"] == \
-            "@timestamp not overwritten (parse error on invalid)"
+                "@timestamp not overwritten (parse error on invalid)"
 
         assert output[2]["error.message"] == \
-            "@timestamp not overwritten (not string)"
+                "@timestamp not overwritten (not string)"
 
         assert "error" not in output[3]
         assert output[3]["@timestamp"] == "2016-04-05T18:47:18.444Z", output[3]["@timestamp"]
@@ -199,7 +196,7 @@ class Test(BaseTest):
         be careful to keep it as a valid type name.
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             json=dict(
                 message_key="msg",
                 keys_under_root=True,
@@ -207,7 +204,7 @@ class Test(BaseTest):
                 add_error_key=True,
             ),
         )
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
         self.copy_files(["logs/json_type.log"],
                         target_dir="log")
 
@@ -224,24 +221,24 @@ class Test(BaseTest):
 
         assert "type" not in output[1]
         assert output[1]["error.message"] == \
-            "type not overwritten (not string)"
+                "type not overwritten (not string)"
 
         assert "type" not in output[2]
         assert output[2]["error.message"] == \
-            "type not overwritten (not string)"
+                "type not overwritten (not string)"
 
     def test_id_in_message(self):
         """
         Extract document ID from json contents.
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             json=dict(
                 message_key="msg",
                 document_id="id",
             ),
         )
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
         self.copy_files(["logs/json_id.log"],
                         target_dir="log")
         proc = self.start_beat()
@@ -265,21 +262,23 @@ class Test(BaseTest):
         in here also contains a null value.
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             json=dict(
                 message_key="message",
                 keys_under_root=True,
                 overwrite_keys=True,
-                add_error_key=True
+                add_error_key=True,
             ),
-            processors=[{
-                "drop_fields": {
-                    "fields": ["headers.request-id"],
-                },
-            }]
+            processors=[
+                {
+                    "drop_fields": {
+                        "fields": ["headers.request-id"],
+                    },
+                }
+            ],
         )
 
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
         self.copy_files(["logs/json_null.log"],
                         target_dir="log")
 
@@ -306,16 +305,13 @@ class Test(BaseTest):
         Test if json_decoding_error is set to true, that no errors are logged.
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
-            json=dict(
-                message_key="message",
-                ignore_decoding_error=True
-            ),
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
+            json=dict(message_key="message", ignore_decoding_error=True),
         )
 
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
 
-        testfile1 = self.working_dir + "/log/test.log"
+        testfile1 = f"{self.working_dir}/log/test.log"
 
         message = "invalidjson"
         with open(testfile1, 'a') as f:
@@ -339,16 +335,13 @@ class Test(BaseTest):
         Test if json_decoding_error is set to false, that an errors is logged.
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
-            json=dict(
-                message_key="message",
-                ignore_decoding_error=False
-            ),
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
+            json=dict(message_key="message", ignore_decoding_error=False),
         )
 
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
 
-        testfile1 = self.working_dir + "/log/test.log"
+        testfile1 = f"{self.working_dir}/log/test.log"
 
         message = "invalidjson"
         with open(testfile1, 'a') as f:
@@ -374,21 +367,23 @@ class Test(BaseTest):
         in here also contains a null value.
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             json=dict(
                 message_key="message",
                 keys_under_root=True,
                 overwrite_keys=True,
-                add_error_key=True
+                add_error_key=True,
             ),
-            processors=[{
-                "drop_fields": {
-                    "fields": ["headers", "res"],
-                },
-            }]
+            processors=[
+                {
+                    "drop_fields": {
+                        "fields": ["headers", "res"],
+                    },
+                }
+            ],
         )
 
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
         self.copy_files(["logs/json_null.log"],
                         target_dir="log")
 
@@ -416,17 +411,19 @@ class Test(BaseTest):
         value by using a simple `equal` condition. See #2038.
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             json=dict(
                 keys_under_root=True,
             ),
-            processors=[{
-                "drop_event": {
-                    "when": "equals.status: 200",
-                },
-            }]
+            processors=[
+                {
+                    "drop_event": {
+                        "when": "equals.status: 200",
+                    },
+                }
+            ],
         )
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
         self.copy_files(["logs/json_int.log"],
                         target_dir="log")
 

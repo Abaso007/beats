@@ -210,14 +210,14 @@ class Test(metricbeat.BaseTest):
             "process.name",
             "process.pid",
         ]:
-            assert key in output, "'%s' not found" % key
+            assert key in output, f"'{key}' not found"
 
         for key in [
             "system.process.memory.size",
             "system.process.memory.rss.bytes",
             "system.process.memory.rss.pct"
         ]:
-            assert key not in output, "'%s' not expected but found" % key
+            assert key not in output, f"'{key}' not expected but found"
 
     def test_contradictory_multiple_actions(self):
         """
