@@ -25,20 +25,16 @@ class Test(BaseTest):
         """Check if registrar file is created correctly and content is as expected
         """
 
-        self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*"
-        )
-        os.mkdir(self.working_dir + "/log/")
+        self.render_config_template(path=f"{os.path.abspath(self.working_dir)}/log/*")
+        os.mkdir(f"{self.working_dir}/log/")
 
         # Use \n as line terminator on all platforms per docs.
         line = "hello world\n"
         line_len = len(line) - 1 + len(os.linesep)
         iterations = 5
-        testfile_path = self.working_dir + "/log/test.log"
-        testfile = open(testfile_path, 'w')
-        testfile.write(iterations * line)
-        testfile.close()
-
+        testfile_path = f"{self.working_dir}/log/test.log"
+        with open(testfile_path, 'w') as testfile:
+            testfile.write(iterations * line)
         filebeat = self.start_beat()
         count = self.log_contains_count("states written")
 
@@ -94,24 +90,21 @@ class Test(BaseTest):
         Check that multiple files are put into registrar file
         """
 
-        self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*"
-        )
-        os.mkdir(self.working_dir + "/log/")
+        self.render_config_template(path=f"{os.path.abspath(self.working_dir)}/log/*")
+        os.mkdir(f"{self.working_dir}/log/")
 
-        testfile_path1 = self.working_dir + "/log/test1.log"
-        testfile_path2 = self.working_dir + "/log/test2.log"
-        file1 = open(testfile_path1, 'w')
-        file2 = open(testfile_path2, 'w')
+        testfile_path1 = f"{self.working_dir}/log/test1.log"
+        testfile_path2 = f"{self.working_dir}/log/test2.log"
+        with open(testfile_path1, 'w') as file1:
+            file2 = open(testfile_path2, 'w')
 
-        iterations = 5
-        for _ in range(0, iterations):
-            file1.write("hello world")  # 11 chars
-            file1.write("\n")  # 1 char
-            file2.write("goodbye world")  # 11 chars
-            file2.write("\n")  # 1 char
+            iterations = 5
+            for _ in range(iterations):
+                file1.write("hello world")  # 11 chars
+                file1.write("\n")  # 1 char
+                file2.write("goodbye world")  # 11 chars
+                file2.write("\n")  # 1 char
 
-        file1.close()
         file2.close()
 
         filebeat = self.start_beat()
@@ -136,11 +129,11 @@ class Test(BaseTest):
         is created automatically.
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             registry_home="a/b/c/registry",
         )
-        os.mkdir(self.working_dir + "/log/")
-        testfile_path = self.working_dir + "/log/test.log"
+        os.mkdir(f"{self.working_dir}/log/")
+        testfile_path = f"{self.working_dir}/log/test.log"
         with open(testfile_path, 'w') as testfile:
             testfile.write("hello world\n")
         filebeat = self.start_beat()
@@ -169,11 +162,11 @@ class Test(BaseTest):
         registry_file = os.path.join(registry_home, "filebeat/data.json")
 
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             registry_home=registry_home,
         )
-        os.mkdir(self.working_dir + "/log/")
-        testfile_path = self.working_dir + "/log/test.log"
+        os.mkdir(f"{self.working_dir}/log/")
+        testfile_path = f"{self.working_dir}/log/test.log"
         with open(testfile_path, 'w') as testfile:
             testfile.write("hello world\n")
         filebeat = self.start_beat()
@@ -203,12 +196,12 @@ class Test(BaseTest):
         registry_file = os.path.join(registry_home, "filebeat/data.json")
 
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             registry_home=registry_home,
             registry_file_permissions=0o640,
         )
-        os.mkdir(self.working_dir + "/log/")
-        testfile_path = self.working_dir + "/log/test.log"
+        os.mkdir(f"{self.working_dir}/log/")
+        testfile_path = f"{self.working_dir}/log/test.log"
         with open(testfile_path, 'w') as testfile:
             testfile.write("hello world\n")
         filebeat = self.start_beat()
@@ -238,11 +231,11 @@ class Test(BaseTest):
         registry_file = os.path.join(registry_home, "filebeat/data.json")
 
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             registry_home=registry_home,
         )
-        os.mkdir(self.working_dir + "/log/")
-        testfile_path = self.working_dir + "/log/test.log"
+        os.mkdir(f"{self.working_dir}/log/")
+        testfile_path = f"{self.working_dir}/log/test.log"
         with open(testfile_path, 'w') as testfile:
             testfile.write("hello world\n")
         filebeat = self.start_beat()
@@ -259,9 +252,9 @@ class Test(BaseTest):
         self.assertEqual(self.file_permissions(registry_file), "0o600")
 
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             registry_home="a/b/c/registry_x",
-            registry_file_permissions=0o640
+            registry_file_permissions=0o640,
         )
 
         filebeat = self.start_beat()
@@ -286,12 +279,11 @@ class Test(BaseTest):
         Checks that the registry is properly updated after a file is rotated
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
-            close_inactive="1s"
+            path=f"{os.path.abspath(self.working_dir)}/log/*", close_inactive="1s"
         )
 
-        os.mkdir(self.working_dir + "/log/")
-        testfile_path = self.working_dir + "/log/test.log"
+        os.mkdir(f"{self.working_dir}/log/")
+        testfile_path = f"{self.working_dir}/log/test.log"
 
         filebeat = self.start_beat()
 
@@ -301,7 +293,7 @@ class Test(BaseTest):
         self.wait_until(lambda: self.output_has(lines=1),
                         max_timeout=10)
 
-        testfilerenamed = self.working_dir + "/log/test.1.log"
+        testfilerenamed = f"{self.working_dir}/log/test.1.log"
         os.rename(testfile_path, testfilerenamed)
 
         with open(testfile_path, 'w') as testfile:
@@ -339,24 +331,24 @@ class Test(BaseTest):
         Checks that the registry file is written in a custom data path.
         """
         self.render_config_template(
-            path=self.working_dir + "/test.log",
-            path_data=self.working_dir + "/datapath",
+            path=f"{self.working_dir}/test.log",
+            path_data=f"{self.working_dir}/datapath",
             skip_registry_config=True,
         )
-        with open(self.working_dir + "/test.log", "w") as testfile:
+        with open(f"{self.working_dir}/test.log", "w") as testfile:
             testfile.write("test message\n")
         filebeat = self.start_beat()
         self.wait_until(lambda: self.output_has(lines=1))
         filebeat.check_kill_and_wait()
 
-        assert self.has_registry(data_path=self.working_dir+"/datapath")
+        assert self.has_registry(data_path=f"{self.working_dir}/datapath")
 
     def test_rotating_file_inode(self):
         """
         Check that inodes are properly written during file rotation
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/input*",
+            path=f"{os.path.abspath(self.working_dir)}/log/input*",
             scan_frequency="1s",
             close_inactive="1s",
             clean_removed="false",
@@ -365,8 +357,8 @@ class Test(BaseTest):
         if os.name == "nt":
             raise SkipTest
 
-        os.mkdir(self.working_dir + "/log/")
-        testfile_path = self.working_dir + "/log/input"
+        os.mkdir(f"{self.working_dir}/log/")
+        testfile_path = f"{self.working_dir}/log/input"
 
         filebeat = self.start_beat()
 
@@ -387,7 +379,7 @@ class Test(BaseTest):
         assert os.stat(testfile_path).st_ino == self.get_registry_entry_by_path(
             os.path.abspath(testfile_path))["FileStateOS"]["inode"]
 
-        testfilerenamed1 = self.working_dir + "/log/input.1"
+        testfilerenamed1 = f"{self.working_dir}/log/input.1"
         os.rename(testfile_path, testfilerenamed1)
 
         with open(testfile_path, 'w') as testfile:
@@ -413,7 +405,7 @@ class Test(BaseTest):
             os.path.abspath(testfilerenamed1))["FileStateOS"]["inode"]
 
         # Rotate log file, create a new empty one and remove it afterwards
-        testfilerenamed2 = self.working_dir + "/log/input.2"
+        testfilerenamed2 = f"{self.working_dir}/log/input.2"
         os.rename(testfilerenamed1, testfilerenamed2)
         os.rename(testfile_path, testfilerenamed1)
 
@@ -441,22 +433,22 @@ class Test(BaseTest):
 
         # Check that 3 files are part of the registrar file. The deleted file
         # should never have been detected, but the rotated one should be in
-        assert len(data) == 3, "Expected 3 files but got: %s" % data
+        assert len(data) == 3, f"Expected 3 files but got: {data}"
 
     def test_restart_continue(self):
         """
         Check that file reading continues after restart
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/input*",
-            scan_frequency="1s"
+            path=f"{os.path.abspath(self.working_dir)}/log/input*",
+            scan_frequency="1s",
         )
 
         if os.name == "nt":
             raise SkipTest
 
-        os.mkdir(self.working_dir + "/log/")
-        testfile_path = self.working_dir + "/log/input"
+        os.mkdir(f"{self.working_dir}/log/")
+        testfile_path = f"{self.working_dir}/log/input"
 
         filebeat = self.start_beat()
 
@@ -478,8 +470,8 @@ class Test(BaseTest):
         # Store first registry file
         registry_file = "registry/filebeat/data.json"
         shutil.copyfile(
-            self.working_dir + "/" + registry_file,
-            self.working_dir + "/registry.first",
+            f"{self.working_dir}/{registry_file}",
+            f"{self.working_dir}/registry.first",
         )
 
         # Append file
@@ -520,17 +512,17 @@ class Test(BaseTest):
         Check that inodes are properly written during file rotation and restart
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/input*",
+            path=f"{os.path.abspath(self.working_dir)}/log/input*",
             scan_frequency="1s",
             close_inactive="1s",
-            clean_removed="false"
+            clean_removed="false",
         )
 
         if os.name == "nt":
             raise SkipTest
 
-        os.mkdir(self.working_dir + "/log/")
-        testfile_path = self.working_dir + "/log/input"
+        os.mkdir(f"{self.working_dir}/log/")
+        testfile_path = f"{self.working_dir}/log/input"
 
         filebeat = self.start_beat()
 
@@ -548,7 +540,7 @@ class Test(BaseTest):
         assert os.stat(testfile_path).st_ino == self.get_registry_entry_by_path(
             os.path.abspath(testfile_path))["FileStateOS"]["inode"]
 
-        testfilerenamed1 = self.working_dir + "/log/input.1"
+        testfilerenamed1 = f"{self.working_dir}/log/input.1"
         os.rename(testfile_path, testfilerenamed1)
 
         with open(testfile_path, 'w') as testfile:
@@ -579,12 +571,12 @@ class Test(BaseTest):
         # Store first registry file
         registry_file = "registry/filebeat/data.json"
         shutil.copyfile(
-            self.working_dir + "/" + registry_file,
-            self.working_dir + "/registry.first",
+            f"{self.working_dir}/{registry_file}",
+            f"{self.working_dir}/registry.first",
         )
 
         # Rotate log file, create a new empty one and remove it afterwards
-        testfilerenamed2 = self.working_dir + "/log/input.2"
+        testfilerenamed2 = f"{self.working_dir}/log/input.2"
         os.rename(testfilerenamed1, testfilerenamed2)
         os.rename(testfile_path, testfilerenamed1)
 
@@ -626,16 +618,16 @@ class Test(BaseTest):
         Checks that the state is written correctly after rotation
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/input*",
+            path=f"{os.path.abspath(self.working_dir)}/log/input*",
             ignore_older="2m",
             scan_frequency="1s",
-            close_inactive="1s"
+            close_inactive="1s",
         )
 
-        os.mkdir(self.working_dir + "/log/")
-        testfile_path1 = self.working_dir + "/log/input"
-        testfile_path2 = self.working_dir + "/log/input.1"
-        testfile_path3 = self.working_dir + "/log/input.2"
+        os.mkdir(f"{self.working_dir}/log/")
+        testfile_path1 = f"{self.working_dir}/log/input"
+        testfile_path2 = f"{self.working_dir}/log/input.1"
+        testfile_path3 = f"{self.working_dir}/log/input.2"
 
         with open(testfile_path1, 'w') as testfile:
             testfile.write("entry10\n")
@@ -700,16 +692,16 @@ class Test(BaseTest):
         Checks that the state is written correctly after rotation and ignore older
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/input*",
+            path=f"{os.path.abspath(self.working_dir)}/log/input*",
             ignore_older="2m",
             scan_frequency="1s",
-            close_inactive="1s"
+            close_inactive="1s",
         )
 
-        os.mkdir(self.working_dir + "/log/")
-        testfile_path1 = self.working_dir + "/log/input"
-        testfile_path2 = self.working_dir + "/log/input.1"
-        testfile_path3 = self.working_dir + "/log/input.2"
+        os.mkdir(f"{self.working_dir}/log/")
+        testfile_path1 = f"{self.working_dir}/log/input"
+        testfile_path2 = f"{self.working_dir}/log/input.1"
+        testfile_path3 = f"{self.working_dir}/log/input.2"
 
         with open(testfile_path1, 'w') as testfile1:
             testfile1.write("entry10\n")
@@ -778,11 +770,11 @@ class Test(BaseTest):
         Checks that states are properly removed after clean_inactive
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/input*",
+            path=f"{os.path.abspath(self.working_dir)}/log/input*",
             clean_inactive="3s",
             ignore_older="2s",
             close_inactive="0.2s",
-            scan_frequency="0.1s"
+            scan_frequency="0.1s",
         )
 
         file1 = "input1"
@@ -814,7 +806,7 @@ class Test(BaseTest):
 
         # Check that the first two files were removed from the registry
         data = self.registry.load()
-        assert len(data) == 1, "Expected a single file but got: %s" % data
+        assert len(data) == 1, f"Expected a single file but got: {data}"
 
         # Make sure the last file in the registry is the correct one and has the correct offset
         assert data[0]["offset"] == self.input_logs.size(file3)
@@ -825,10 +817,10 @@ class Test(BaseTest):
         """
 
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/input*",
+            path=f"{os.path.abspath(self.working_dir)}/log/input*",
             scan_frequency="0.1s",
             clean_removed=True,
-            close_removed=True
+            close_removed=True,
         )
 
         file1 = "input1"
@@ -874,12 +866,12 @@ class Test(BaseTest):
         """
 
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/input*",
+            path=f"{os.path.abspath(self.working_dir)}/log/input*",
             scan_frequency="0.1s",
             clean_removed=True,
             clean_inactive="60s",
             ignore_older="15s",
-            close_removed=True
+            close_removed=True,
         )
 
         file1 = "input1"
@@ -901,7 +893,7 @@ class Test(BaseTest):
             max_timeout=15)
 
         count = self.registry.count()
-        print("registry size: {}".format(count))
+        print(f"registry size: {count}")
         assert count == 2
 
         self.input_logs.remove(file1)
@@ -918,7 +910,7 @@ class Test(BaseTest):
         self.wait_until(self.logs.check("Before: 1, After: 1, Pending: 1"))
         self.wait_until(self.logs.nextCheck("Registry file updated. 1 states written."))
         count = self.registry.count()
-        print("registry size after remove: {}".format(count))
+        print(f"registry size after remove: {count}")
         assert count == 1
 
         filebeat.check_kill_and_wait()
@@ -934,18 +926,16 @@ class Test(BaseTest):
         """
         Test that filebeat does not start if a symlink is set as registry file
         """
-        self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
-        )
-        os.mkdir(self.working_dir + "/log/")
+        self.render_config_template(path=f"{os.path.abspath(self.working_dir)}/log/*")
+        os.mkdir(f"{self.working_dir}/log/")
 
-        testfile_path = self.working_dir + "/log/test.log"
+        testfile_path = f"{self.working_dir}/log/test.log"
         with open(testfile_path, 'w') as testfile:
             testfile.write("Hello World\n")
 
-        registry_file = self.working_dir + "/registry/filebeat/data.json"
-        link_to_file = self.working_dir + "registry.data"
-        os.makedirs(self.working_dir + "/registry/filebeat")
+        registry_file = f"{self.working_dir}/registry/filebeat/data.json"
+        link_to_file = f"{self.working_dir}registry.data"
+        os.makedirs(f"{self.working_dir}/registry/filebeat")
 
         with open(link_to_file, 'w') as f:
             f.write("[]")
@@ -970,17 +960,15 @@ class Test(BaseTest):
         Test that filebeat fails starting if invalid state in registry
         """
 
-        self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
-        )
-        os.mkdir(self.working_dir + "/log/")
-        registry_file = self.working_dir + "/registry"
+        self.render_config_template(path=f"{os.path.abspath(self.working_dir)}/log/*")
+        os.mkdir(f"{self.working_dir}/log/")
+        registry_file = f"{self.working_dir}/registry"
 
-        testfile_path = self.working_dir + "/log/test.log"
+        testfile_path = f"{self.working_dir}/log/test.log"
         with open(testfile_path, 'w') as testfile:
             testfile.write("Hello World\n")
 
-        registry_file_path = self.working_dir + "/registry"
+        registry_file_path = f"{self.working_dir}/registry"
         with open(registry_file_path, 'w') as registry_file:
             # Write invalid state
             registry_file.write("Hello World")
@@ -1001,13 +989,13 @@ class Test(BaseTest):
         """
 
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             close_inactive="200ms",
             ignore_older="2000ms",
         )
 
-        init_files = ["test"+str(i)+".log" for i in range(3)]
-        restart_files = ["test"+str(i+3)+".log" for i in range(1)]
+        init_files = [f"test{str(i)}.log" for i in range(3)]
+        restart_files = [f"test{str(i + 3)}.log" for i in range(1)]
 
         for name in init_files:
             self.input_logs.write(name, "Hello World\n")
@@ -1022,7 +1010,7 @@ class Test(BaseTest):
         filebeat.check_kill_and_wait()
 
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             close_inactive="200ms",
             ignore_older="2000ms",
             clean_inactive="3s",
@@ -1049,13 +1037,13 @@ class Test(BaseTest):
         """
 
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             clean_inactive="10s",
-            ignore_older="5s"
+            ignore_older="5s",
         )
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
 
-        testfile_path = self.working_dir + "/log/test.log"
+        testfile_path = f"{self.working_dir}/log/test.log"
 
         with open(testfile_path, 'w') as testfile:
             testfile.write("Hello World\n")
@@ -1076,7 +1064,7 @@ class Test(BaseTest):
 
         # No config file which does not match the existing state
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/test2.log",
+            path=f"{os.path.abspath(self.working_dir)}/log/test2.log",
             clean_inactive="10s",
             ignore_older="5s",
         )
@@ -1102,13 +1090,13 @@ class Test(BaseTest):
         """
 
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/test.log",
+            path=f"{os.path.abspath(self.working_dir)}/log/test.log",
             clean_inactive="20s",
-            ignore_older="15s"
+            ignore_older="15s",
         )
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
 
-        testfile_path = self.working_dir + "/log/test.log"
+        testfile_path = f"{self.working_dir}/log/test.log"
 
         with open(testfile_path, 'w') as testfile:
             testfile.write("Hello World\n")
@@ -1133,7 +1121,7 @@ class Test(BaseTest):
 
         # New config file which does not match the existing clean_inactive
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/test.log",
+            path=f"{os.path.abspath(self.working_dir)}/log/test.log",
             clean_inactive="40s",
             ignore_older="20s",
         )
@@ -1161,13 +1149,13 @@ class Test(BaseTest):
         """
 
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/test file.log",
+            path=f"{os.path.abspath(self.working_dir)}/log/test file.log",
             clean_inactive="20s",
-            ignore_older="15s"
+            ignore_older="15s",
         )
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
 
-        testfile_path = self.working_dir + "/log/test file.log"
+        testfile_path = f"{self.working_dir}/log/test file.log"
 
         with open(testfile_path, 'w') as testfile:
             testfile.write("Hello World\n")
@@ -1192,7 +1180,7 @@ class Test(BaseTest):
 
         # new config file with other clean_inactive
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/test file.log",
+            path=f"{os.path.abspath(self.working_dir)}/log/test file.log",
             clean_inactive="40s",
             ignore_older="5s",
         )
@@ -1217,13 +1205,13 @@ class Test(BaseTest):
         """
 
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/test.log",
+            path=f"{os.path.abspath(self.working_dir)}/log/test.log",
             clean_inactive="10s",
-            ignore_older="5s"
+            ignore_older="5s",
         )
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
 
-        testfile_path = self.working_dir + "/log/test.log"
+        testfile_path = f"{self.working_dir}/log/test.log"
 
         with open(testfile_path, 'w') as testfile:
             testfile.write("Hello World\n")
@@ -1244,7 +1232,7 @@ class Test(BaseTest):
 
         # New config without clean_inactive
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/test.log",
+            path=f"{os.path.abspath(self.working_dir)}/log/test.log"
         )
 
         filebeat = self.start_beat(output="filebeat2.log")
@@ -1268,13 +1256,13 @@ class Test(BaseTest):
         """
 
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             close_inactive="1s",
             ignore_older="1s",
         )
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
 
-        testfile_path1 = self.working_dir + "/log/test.log"
+        testfile_path1 = f"{self.working_dir}/log/test.log"
 
         with open(testfile_path1, 'w') as testfile1:
             testfile1.write("Hello World\n")
@@ -1312,14 +1300,14 @@ class Test(BaseTest):
         """
 
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             close_inactive="1s",
             clean_inactive="2s",
             ignore_older="1s",
         )
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
 
-        testfile_path1 = self.working_dir + "/log/test.log"
+        testfile_path1 = f"{self.working_dir}/log/test.log"
 
         with open(testfile_path1, 'w') as testfile1:
             testfile1.write("Hello World\n")
@@ -1359,26 +1347,27 @@ class Test(BaseTest):
         """
 
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
-            input_processors=[{
-                "drop_event": {},
-            }]
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
+            input_processors=[
+                {
+                    "drop_event": {},
+                }
+            ],
         )
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
 
-        testfile_path1 = self.working_dir + "/log/test1.log"
-        testfile_path2 = self.working_dir + "/log/test2.log"
-        file1 = open(testfile_path1, 'w')
-        file2 = open(testfile_path2, 'w')
+        testfile_path1 = f"{self.working_dir}/log/test1.log"
+        testfile_path2 = f"{self.working_dir}/log/test2.log"
+        with open(testfile_path1, 'w') as file1:
+            file2 = open(testfile_path2, 'w')
 
-        iterations = 5
-        for _ in range(0, iterations):
-            file1.write("hello world")  # 11 chars
-            file1.write("\n")  # 1 char
-            file2.write("goodbye world")  # 11 chars
-            file2.write("\n")  # 1 char
+            iterations = 5
+            for _ in range(iterations):
+                file1.write("hello world")  # 11 chars
+                file1.write("\n")  # 1 char
+                file2.write("goodbye world")  # 11 chars
+                file2.write("\n")  # 1 char
 
-        file1.close()
         file2.close()
 
         filebeat = self.start_beat()
@@ -1436,7 +1425,8 @@ class Test(BaseTest):
 
         self.render_config_template(
             type='docker',
-            input_raw='''
+            input_raw=(
+                '''
   containers:
     path: {path}
     stream: stdout
@@ -1448,14 +1438,17 @@ class Test(BaseTest):
     stream: stderr
     ids:
       - container_id
-            '''.format(path=os.path.abspath(self.working_dir) + "/log/")
+            '''.format(
+                    path=f"{os.path.abspath(self.working_dir)}/log/"
+                )
+            ),
         )
-        os.mkdir(self.working_dir + "/log/")
-        os.mkdir(self.working_dir + "/log/container_id")
-        testfile_path1 = self.working_dir + "/log/container_id/test.log"
+        os.mkdir(f"{self.working_dir}/log/")
+        os.mkdir(f"{self.working_dir}/log/container_id")
+        testfile_path1 = f"{self.working_dir}/log/container_id/test.log"
 
         with open(testfile_path1, 'w') as f:
-            for i in range(0, 10):
+            for _ in range(10):
                 f.write('{"log":"hello\\n","stream":"stdout","time":"2018-04-13T13:39:57.924216596Z"}\n')
                 f.write('{"log":"hello\\n","stream":"stderr","time":"2018-04-13T13:39:57.924216596Z"}\n')
 

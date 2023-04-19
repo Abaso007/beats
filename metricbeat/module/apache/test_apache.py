@@ -56,7 +56,7 @@ class ApacheStatusTest(metricbeat.BaseTest):
         found = False
         # Waits until CPULoad is part of the status
         while not found:
-            res = urllib.request.urlopen(hosts[0] + "/server-status?auto").read()
+            res = urllib.request.urlopen(f"{hosts[0]}/server-status?auto").read()
             if b"CPULoad" in res:
                 found = True
             time.sleep(0.5)
@@ -89,11 +89,11 @@ class ApacheStatusTest(metricbeat.BaseTest):
             # There are more fields that could be checked.
 
     def old_apache_version(self):
-        if not 'APACHE_VERSION' in self.COMPOSE_ENV:
+        if 'APACHE_VERSION' not in self.COMPOSE_ENV:
             return False
 
         version = self.COMPOSE_ENV['APACHE_VERSION']
         return semver.compare(version, '2.4.12') <= 0
 
     def get_hosts(self):
-        return ['http://' + self.compose_host()]
+        return [f'http://{self.compose_host()}']

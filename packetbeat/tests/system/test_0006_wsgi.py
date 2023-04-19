@@ -27,8 +27,8 @@ class Test(BaseTest):
         assert o["url.path"] == "/"
         assert o["http.response.status_code"] == 200
         assert o["http.response.status_phrase"] == "ok"
-        assert "request" not in objs[0]
-        assert "response" not in objs[0]
+        assert "request" not in o
+        assert "response" not in o
 
     def test_drum_interaction(self):
         self.render_config_template(
@@ -40,11 +40,10 @@ class Test(BaseTest):
         objs = self.read_output()
         assert len(objs) == 16
 
-        assert all([o["type"] == "http" for o in objs])
-        assert all([o["server.port"] == 8888 for o in objs])
+        assert all(o["type"] == "http" for o in objs)
+        assert all(o["server.port"] == 8888 for o in objs)
 
-        assert all([o["status"] == "OK" for i, o in enumerate(objs)
-                    if i != 13])
+        assert all(o["status"] == "OK" for i, o in enumerate(objs) if i != 13)
 
         assert objs[13]["status"] == "Error"
         assert objs[13]["url.path"] == "/comment/"

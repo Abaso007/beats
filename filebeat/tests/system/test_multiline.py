@@ -15,14 +15,14 @@ class Test(BaseTest):
         It checks that all lines which do not start with [ are append to the last line starting with [
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             multiline=True,
             pattern="^\[",
             negate="true",
-            match="after"
+            match="after",
         )
 
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
         self.copy_files(["logs/elasticsearch-multiline-log.log"],
                         target_dir="log")
 
@@ -46,13 +46,13 @@ class Test(BaseTest):
         It checks that all lines following a line with \\ are appended to the previous line
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             multiline=True,
             pattern="\\\\$",
-            match="before"
+            match="before",
         )
 
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
         self.copy_files(["logs/multiline-c-log.log"],
                         target_dir="log")
 
@@ -76,7 +76,7 @@ class Test(BaseTest):
         Special about this log file is that it has empty new lines
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             multiline=True,
             pattern="^=[A-Z]+",
             match="after",
@@ -91,17 +91,15 @@ connection <0.23893.109>, channel 3 - soft error:
 
 
 """
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
 
         proc = self.start_beat()
 
-        testfile = self.working_dir + "/log/rabbitmq.log"
-        file = open(testfile, 'w')
-        iterations = 3
-        for n in range(0, iterations):
-            file.write(logentry)
-        file.close()
-
+        testfile = f"{self.working_dir}/log/rabbitmq.log"
+        with open(testfile, 'w') as file:
+            iterations = 3
+            for _ in range(iterations):
+                file.write(logentry)
         # wait for the "Skipping file" log message
         self.wait_until(
             lambda: self.output_has(lines=3),
@@ -120,15 +118,15 @@ connection <0.23893.109>, channel 3 - soft error:
         All further lines are discarded
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             multiline=True,
             pattern="^\[",
             negate="true",
             match="after",
-            max_lines=3
+            max_lines=3,
         )
 
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
         self.copy_files(["logs/elasticsearch-multiline-log.log"],
                         target_dir="log")
 
@@ -158,16 +156,16 @@ connection <0.23893.109>, channel 3 - soft error:
         Test that data is sent after timeout
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             multiline=True,
             pattern="^\[",
             negate="true",
             match="after",
         )
 
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
 
-        testfile = self.working_dir + "/log/test.log"
+        testfile = f"{self.working_dir}/log/test.log"
         file = open(testfile, 'wb', 0)
 
         file.write(b"[2015] hello world")
@@ -202,15 +200,15 @@ connection <0.23893.109>, channel 3 - soft error:
         Test the maximum number of bytes that is sent
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             multiline=True,
             pattern="^\[",
             negate="true",
             match="after",
-            max_bytes=60
+            max_bytes=60,
         )
 
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
         self.copy_files(["logs/elasticsearch-multiline-log.log"],
                         target_dir="log")
 
@@ -238,7 +236,7 @@ connection <0.23893.109>, channel 3 - soft error:
         Test if multiline events are split up with close_timeout
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             multiline=True,
             pattern="^\[",
             negate="true",
@@ -246,9 +244,9 @@ connection <0.23893.109>, channel 3 - soft error:
             close_timeout="2s",
         )
 
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
 
-        testfile = self.working_dir + "/log/test.log"
+        testfile = f"{self.working_dir}/log/test.log"
 
         with open(testfile, 'wb', 0) as file:
             file.write(b"[2015] hello world")
@@ -293,7 +291,7 @@ connection <0.23893.109>, channel 3 - soft error:
         Test if consecutive multilines have an affect on multiline
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             multiline=True,
             pattern="^\[",
             negate="true",
@@ -313,9 +311,9 @@ SetAdCodeMiddleware.default_ad_code referer
 SetAdCodeMiddleware.default_ad_code path /health_check
 SetAdCodeMiddleware.default_ad_code route """.encode("utf-8")
 
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
 
-        testfile = self.working_dir + "/log/test.log"
+        testfile = f"{self.working_dir}/log/test.log"
 
         with open(testfile, 'bw', 0) as file:
             file.write(logentry1 + b"\n")
@@ -338,7 +336,7 @@ SetAdCodeMiddleware.default_ad_code route """.encode("utf-8")
         Test that filebeat errors if pattern is missing config
         """
         self.render_config_template(
-            path=os.path.abspath(self.working_dir + "/log/") + "*",
+            path=f'{os.path.abspath(f"{self.working_dir}/log/")}*',
             multiline=True,
             match="after",
         )

@@ -13,7 +13,7 @@ import copy
 def read_file(filename):
 
     if not os.path.isfile(filename):
-        print("File not found {}".format(filename))
+        print(f"File not found {filename}")
         return ""
 
     with open(filename, 'r', encoding='utf_8') as f:
@@ -43,9 +43,7 @@ def read_go_mod(vendor_dir):
 
 
 def _get_version_info(elems):
-    data = {}
-    data["path"] = elems[0]
-
+    data = {"path": elems[0]}
     version_info = elems[1].rstrip("\n")
     if version_info.endswith("+incompatible"):
         version_info = version_info[:-len("+incompatible")]
@@ -90,10 +88,14 @@ def get_library_path(license):
     Get the contents up to the vendor folder.
     """
     split = license.split(os.sep)
-    for i, word in reversed(list(enumerate(split))):
-        if word == "vendor":
-            return "/".join(split[i + 1:])
-    return "/".join(split)
+    return next(
+        (
+            "/".join(split[i + 1 :])
+            for i, word in reversed(list(enumerate(split)))
+            if word == "vendor"
+        ),
+        "/".join(split),
+    )
 
 
 def gather_dependencies(vendor_dir, overrides=None):
@@ -105,22 +107,22 @@ def gather_dependencies(vendor_dir, overrides=None):
         licenses = get_licenses(root)
         for filename in licenses:
             lib_path = get_library_path(root)
-            lib_search = [l for l in libs if l["path"].startswith(lib_path)]
-            if len(lib_search) == 0:
-                print("WARNING: No version information found for: {}".format(lib_path))
-                lib = {"path": lib_path}
-            else:
+            if lib_search := [
+                l for l in libs if l["path"].startswith(lib_path)
+            ]:
                 lib = copy.deepcopy(lib_search[0])
 
+            else:
+                print(f"WARNING: No version information found for: {lib_path}")
+                lib = {"path": lib_path}
             lib["license_file"] = os.path.join(root, filename)
 
             lib["license_contents"] = read_file(lib["license_file"])
             lib["license_summary"] = detect_license_summary(lib["license_contents"])
             if lib["license_summary"] == "UNKNOWN":
-                print("WARNING: Unknown license for: {}".format(lib_path))
+                print(f"WARNING: Unknown license for: {lib_path}")
 
-            revision = overrides.get(lib_path, {}).get("revision")
-            if revision:
+            if revision := overrides.get(lib_path, {}).get("revision"):
                 lib["revision"] = revision
 
             if lib_path not in dependencies:
@@ -207,12 +209,13 @@ def check_all_have_license_files(vendor_dir):
                 depth += 1
 
                 if depth > 5:
-                    print("No license in: {}".format(issue))
+                    print(f"No license in: {issue}")
                     issues.append(issue)
 
-    if len(issues) > 0:
-        raise Exception("I have found licensing issues in the following folders: {}"
-                        .format(issues))
+    if issues:
+        raise Exception(
+            f"I have found licensing issues in the following folders: {issues}"
+        )
 
 
 def write_notice_file(f, beat, copyright, dependencies):
@@ -220,7 +223,7 @@ def write_notice_file(f, beat, copyright, dependencies):
     now = datetime.datetime.now()
 
     # Add header
-    f.write("{}\n".format(beat))
+    f.write(f"{beat}\n")
     f.write("Copyright 2014-{0} {1}\n".format(now.year, copyright))
     f.write("\n")
     f.write("This product includes software developed by The Apache Software \n" +
@@ -228,26 +231,26 @@ def write_notice_file(f, beat, copyright, dependencies):
 
     # Add licenses for 3rd party libraries
     f.write("==========================================================================\n")
-    f.write("Third party libraries used by the {} project:\n".format(beat))
+    f.write(f"Third party libraries used by the {beat} project:\n")
     f.write("==========================================================================\n\n")
 
     # Sort licenses by package path, ignore upper / lower case
     for key in sorted(dependencies, key=str.lower):
         for lib in dependencies[key]:
             f.write("\n--------------------------------------------------------------------\n")
-            f.write("Dependency: {}\n".format(key))
+            f.write(f"Dependency: {key}\n")
             if "version" in lib:
-                f.write("Version: {}\n".format(lib["version"]))
+                f.write(f'Version: {lib["version"]}\n')
             if "revision" in lib:
-                f.write("Revision: {}\n".format(lib["revision"]))
+                f.write(f'Revision: {lib["revision"]}\n')
             if "overwrite-path" in lib:
-                f.write("Overwrite: {}\n".format(lib["overwrite-path"]))
+                f.write(f'Overwrite: {lib["overwrite-path"]}\n')
             if "overwrite-version" in lib:
-                f.write("Overwrite-Version: {}\n".format(lib["overwrite-version"]))
+                f.write(f'Overwrite-Version: {lib["overwrite-version"]}\n')
             if "overwrite-revision" in lib:
-                f.write("Overwrite-Revision: {}\n".format(lib["overwrite-revision"]))
-            f.write("License type (autodetected): {}\n".format(lib["license_summary"]))
-            f.write("{}:\n".format(lib["license_file"]))
+                f.write(f'Overwrite-Revision: {lib["overwrite-revision"]}\n')
+            f.write(f'License type (autodetected): {lib["license_summary"]}\n')
+            f.write(f'{lib["license_file"]}:\n')
             f.write("--------------------------------------------------------------------\n")
             if lib["license_summary"] != "Apache-2.0":
                 f.write(lib["license_contents"])
@@ -260,7 +263,7 @@ def write_notice_file(f, beat, copyright, dependencies):
                     continue
 
                 for notice_file in glob.glob(os.path.join(os.path.dirname(lib["license_file"]), "NOTICE*")):
-                    notice_file_hdr = "-------{}-----\n".format(os.path.basename(notice_file))
+                    notice_file_hdr = f"-------{os.path.basename(notice_file)}-----\n"
                     f.write(notice_file_hdr)
                     f.write(read_file(notice_file))
 
@@ -277,7 +280,7 @@ def get_url(repo):
     words = repo.split("/")
     if words[0] != "github.com":
         return repo
-    return "https://github.com/{}/{}".format(words[1], words[2])
+    return f"https://github.com/{words[1]}/{words[2]}"
 
 
 def create_notice(filename, beat, copyright, vendor_dir, csvfile, overrides=None):
@@ -285,12 +288,12 @@ def create_notice(filename, beat, copyright, vendor_dir, csvfile, overrides=None
     if not csvfile:
         with open(filename, "w+", encoding='utf_8') as f:
             write_notice_file(f, beat, copyright, dependencies)
-            print("Available at {}".format(filename))
+            print(f"Available at {filename}")
     else:
         with open(csvfile, "w") as f:
             csvwriter = csv.writer(f)
             write_csv_file(csvwriter, dependencies)
-            print("Available at {}".format(csvfile))
+            print(f"Available at {csvfile}")
     return dependencies
 
 
@@ -396,30 +399,42 @@ def detect_license_summary(content):
     content = re.sub(r"\s+", ' ', content)
     # replace smart quotes with less intelligent ones
     content = content.replace(bytes(b'\xe2\x80\x9c').decode(), '"').replace(bytes(b'\xe2\x80\x9d').decode(), '"')
-    if any(sentence in content[0:1000] for sentence in APACHE2_LICENSE_TITLES):
+    if any(sentence in content[:1000] for sentence in APACHE2_LICENSE_TITLES):
         return "Apache-2.0"
-    if any(sentence in content[0:1000] for sentence in MIT_LICENSES):
+    if any(sentence in content[:1000] for sentence in MIT_LICENSES):
         return "MIT"
-    if all(sentence in content[0:1000] for sentence in BSD_LICENSE_CONTENTS):
-        if all(sentence in content[0:1000] for sentence in BSD_LICENSE_3_CLAUSE):
-            if all(sentence in content[0:1000] for sentence in BSD_LICENSE_4_CLAUSE):
-                return "BSD-4-Clause"
-            return "BSD-3-Clause"
-        else:
+    if all(sentence in content[:1000] for sentence in BSD_LICENSE_CONTENTS):
+        if any(
+            sentence not in content[:1000] for sentence in BSD_LICENSE_3_CLAUSE
+        ):
             return "BSD-2-Clause"
-    if any(sentence in content[0:300] for sentence in MPL_LICENSE_TITLES):
+        if all(
+            sentence in content[:1000] for sentence in BSD_LICENSE_4_CLAUSE
+        ):
+            return "BSD-4-Clause"
+        return "BSD-3-Clause"
+    if any(sentence in content[:300] for sentence in MPL_LICENSE_TITLES):
         return "MPL-2.0"
-    if any(sentence in content[0:3000] for sentence in CC_SA_4_LICENSE_TITLE):
+    if any(sentence in content[:3000] for sentence in CC_SA_4_LICENSE_TITLE):
         return "CC-BY-SA-4.0"
-    if any(sentence in content[0:3000] for sentence in LGPL_3_LICENSE_TITLE):
+    if any(sentence in content[:3000] for sentence in LGPL_3_LICENSE_TITLE):
         return "LGPL-3.0"
-    if any(sentence in content[0:1500] for sentence in UNIVERSAL_PERMISSIVE_LICENSE_TITLES):
+    if any(
+        sentence in content[:1500]
+        for sentence in UNIVERSAL_PERMISSIVE_LICENSE_TITLES
+    ):
         return "UPL-1.0"
-    if any(sentence in content[0:1500] for sentence in ECLIPSE_PUBLIC_LICENSE_TITLES):
+    if any(
+        sentence in content[:1500]
+        for sentence in ECLIPSE_PUBLIC_LICENSE_TITLES
+    ):
         return "EPL-1.0"
-    if any(sentence in content[0:1500] for sentence in ISC_LICENSE_TITLE):
+    if any(sentence in content[:1500] for sentence in ISC_LICENSE_TITLE):
         return "ISC"
-    if any(sentence in content[0:1500] for sentence in ECLIPSE_PUBLIC_LICENSE_TITLES):
+    if any(
+        sentence in content[:1500]
+        for sentence in ECLIPSE_PUBLIC_LICENSE_TITLES
+    ):
         return "EPL-1.0"
     return "UNKNOWN"
 
@@ -472,7 +487,7 @@ if __name__ == "__main__":
         govendor = json.load(args.beats_origin)
         overrides = {package['path']: package for package in govendor["package"]}
 
-    print("Get the licenses available from {}".format(vendor_dir))
+    print(f"Get the licenses available from {vendor_dir}")
     check_all_have_license_files(vendor_dir)
     dependencies = create_notice(notice, args.beat, args.copyright, vendor_dir, args.csvfile, overrides=overrides)
 
@@ -480,5 +495,6 @@ if __name__ == "__main__":
     for _, deps in dependencies.items():
         for dep in deps:
             if dep["license_summary"] not in ACCEPTED_LICENSES:
-                raise Exception("Dependency {} has invalid license {}"
-                                .format(dep["path"], dep["license_summary"]))
+                raise Exception(
+                    f'Dependency {dep["path"]} has invalid license {dep["license_summary"]}'
+                )

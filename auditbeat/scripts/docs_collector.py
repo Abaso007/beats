@@ -45,7 +45,7 @@ This file is generated! See scripts/docs_collector.py
 
         module_file = generated_note
 
-        module_file += ":modulename: " + module + "\n\n"
+        module_file += f":modulename: {module}" + "\n\n"
 
         module_file += "[id=\"{beatname_lc}-module-" + module + "\"]\n"
 
@@ -55,13 +55,13 @@ This file is generated! See scripts/docs_collector.py
         beat_path = os.path.join(module_dir, "_meta")
 
         # Load title from fields.yml
-        with open(beat_path + "/fields.yml") as f:
+        with open(f"{beat_path}/fields.yml") as f:
             fields = yaml.load(f.read())
             title = fields[0]["title"]
 
         modules_list[module] = title
 
-        config_file = beat_path + "/config.yml"
+        config_file = f"{beat_path}/config.yml"
 
         # Add example config file
         if os.path.isfile(config_file):
@@ -103,12 +103,12 @@ is an example configuration:
                 continue
 
             link_name = "{beatname_lc}-dataset-" + module + "-" + dataset
-            link = "<<" + link_name + "," + dataset + ">>"
+            link = f"<<{link_name},{dataset}>>"
             reference = "[id=\"" + link_name + "\"]"
 
-            module_links += "* " + link + "\n\n"
+            module_links += f"* {link}" + "\n\n"
 
-            module_includes += "include::" + module + "/" + dataset + ".asciidoc[]\n\n"
+            module_includes += f"include::{module}/{dataset}" + ".asciidoc[]\n\n"
 
             dataset_file = generated_note
 
@@ -116,9 +116,12 @@ is an example configuration:
             dataset_file += reference + "\n"
 
             # Create title out of module and dataset set name
-            dataset_file += "=== {} {} dataset\n\n".format(title, dataset)
+            dataset_file += f"=== {title} {dataset} dataset\n\n"
 
-            dataset_file += 'include::../../../module/' + module + '/' + dataset + '/_meta/docs.asciidoc[]' + "\n"
+            dataset_file += (
+                f'include::../../../module/{module}/{dataset}/_meta/docs.asciidoc[]'
+                + "\n"
+            )
 
             # TODO: This should point directly to the exported fields of the dataset, not the whole module
             dataset_file += """
@@ -139,11 +142,14 @@ For a description of each field in the dataset, see the
 
                 dataset_file += "[source,json]\n"
                 dataset_file += "----\n"
-                dataset_file += "include::../../../module/" + module + "/" + dataset + "/_meta/data.json[]\n"
+                dataset_file += (
+                    f"include::../../../module/{module}/{dataset}"
+                    + "/_meta/data.json[]\n"
+                )
                 dataset_file += "----\n"
 
             # Write dataset docs
-            with open(os.path.join(module_docs_path(module_dir), "modules", module, dataset + ".asciidoc"), 'w') as f:
+            with open(os.path.join(module_docs_path(module_dir), "modules", module, f"{dataset}.asciidoc"), 'w') as f:
                 f.write(dataset_file)
 
         if len(module_links) > 0:
@@ -155,7 +161,7 @@ For a description of each field in the dataset, see the
             module_file += module_includes
 
         # Write module docs
-        with open(os.path.join(module_docs_path(module_dir), "modules", module + ".asciidoc"), 'w') as f:
+        with open(os.path.join(module_docs_path(module_dir), "modules", f"{module}.asciidoc"), 'w') as f:
             f.write(module_file)
 
     module_list_output = generated_note
@@ -165,8 +171,12 @@ For a description of each field in the dataset, see the
     module_list_output += "\n\n--\n\n"
     for module_name, module_path in sorted(six.iteritems(module_dirs)):
         rel_path_to_module_docs = os.path.relpath(module_docs_path(module_path), docs_path)
-        module_list_output += "include::" + \
-            os.path.join(rel_path_to_module_docs, "modules", module_name + ".asciidoc") + "[]\n"
+        module_list_output += (
+            "include::"
+            + os.path.join(
+                rel_path_to_module_docs, "modules", f"{module_name}.asciidoc"
+            )
+        ) + "[]\n"
 
     # Write module link list
     with open(os.path.join(docs_path, "modules_list.asciidoc"), 'w') as f:

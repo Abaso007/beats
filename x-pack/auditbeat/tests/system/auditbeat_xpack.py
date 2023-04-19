@@ -10,12 +10,13 @@ from metricbeat import BaseTest as MetricbeatTest
 class AuditbeatXPackTest(MetricbeatTest):
 
     @classmethod
-    def setUpClass(self):
-        self.beat_name = "auditbeat"
-        self.beat_path = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "../../"))
+    def setUpClass(cls):
+        cls.beat_name = "auditbeat"
+        cls.beat_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "../../")
+        )
 
-        super(MetricbeatTest, self).setUpClass()
+        super(MetricbeatTest, cls).setUpClass()
 
     def setUp(self):
         super(MetricbeatTest, self).setUp()
@@ -55,8 +56,8 @@ class AuditbeatXPackTest(MetricbeatTest):
 
         flattened = self.flatten_object(evt, {})
         for f in fields:
-            if not f in flattened:
-                raise Exception("Field '{}' not found in event.".format(f))
+            if f not in flattened:
+                raise Exception(f"Field '{f}' not found in event.")
 
         # Check for presence of top-level error object.
         if not errors_allowed and "error" in evt:

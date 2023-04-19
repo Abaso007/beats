@@ -38,4 +38,4 @@ class Test(XPackTest):
             self.assertIn("query", evt["sql"].keys(), evt)
 
     def get_hosts(self):
-        return ['root:test@tcp({})/'.format(self.compose_host())]
+        return [f'root:test@tcp({self.compose_host()})/']

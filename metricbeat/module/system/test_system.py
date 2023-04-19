@@ -291,10 +291,10 @@ class Test(metricbeat.BaseTest):
         self.assert_fields_are_documented(evt)
 
         memory = evt["system"]["memory"]
-        if not re.match("(?i)linux", sys.platform) and not "hugepages" in memory:
+        if not re.match("(?i)linux", sys.platform) and "hugepages" not in memory:
             # Ensure presence of hugepages only in Linux
             memory["hugepages"] = None
-        if not re.match("(?i)linux", sys.platform) and not "page_stats" in memory:
+        if not re.match("(?i)linux", sys.platform) and "page_stats" not in memory:
             # Ensure presence of page_stats only in Linux
             memory["page_stats"] = None
         self.assertCountEqual(self.de_dot(SYSTEM_MEMORY_FIELDS), memory.keys())
@@ -491,7 +491,7 @@ class Test(metricbeat.BaseTest):
             assert isinstance(udp["all"]["count"], int)
 
     def check_username(self, observed, expected=None):
-        if expected == None:
+        if expected is None:
             expected = getpass.getuser()
 
         if os.name == 'nt':
@@ -499,4 +499,6 @@ class Test(metricbeat.BaseTest):
             assert len(parts) == 2, "Expected proc.username to be of form DOMAIN\\username, but was %s" % observed
             observed = parts[1]
 
-        assert expected == observed, "proc.username = %s, but expected %s" % (observed, expected)
+        assert (
+            expected == observed
+        ), f"proc.username = {observed}, but expected {expected}"

@@ -36,9 +36,9 @@ class Test(BaseTest):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # TCP
         sock.connect((host, port))
 
-        for n in range(0, 2):
+        for n in range(2):
             m = "<13>Oct 11 22:14:15 wopr.mymachine.co postfix/smtpd[2000]:" \
-                " 'su root' failed for lonvick on /dev/pts/8 {}\n"
+                    " 'su root' failed for lonvick on /dev/pts/8 {}\n"
             m = m.format(n)
             sock.send(m.encode("utf-8"))
 
@@ -78,7 +78,7 @@ class Test(BaseTest):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # TCP
         sock.connect((host, port))
 
-        for n in range(0, 2):
+        for _ in range(2):
             sock.send("invalid\n".encode("utf-8"))
 
         self.wait_until(lambda: self.output_count(lambda x: x >= 2))
@@ -117,9 +117,9 @@ class Test(BaseTest):
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # TCP
 
-        for n in range(0, 2):
+        for n in range(2):
             m = "<13>Oct 11 22:14:15 wopr.mymachine.co postfix/smtpd[2000]:" \
-                " 'su root' failed for lonvick on /dev/pts/8 {}\n"
+                    " 'su root' failed for lonvick on /dev/pts/8 {}\n"
             m = m.format(n)
             sock.sendto(m.encode("utf-8"), (host, port))
 
@@ -165,9 +165,9 @@ class Test(BaseTest):
 
             sock.connect(path)
 
-            for n in range(0, 2):
+            for n in range(2):
                 m = "<13>Oct 11 22:14:15 wopr.mymachine.co postfix/smtpd[2000]:" \
-                    " 'su root' failed for lonvick on /dev/pts/8 {}\n"
+                        " 'su root' failed for lonvick on /dev/pts/8 {}\n"
                 m = m.format(n)
                 sock.send(m.encode("utf-8"))
 
@@ -212,7 +212,7 @@ class Test(BaseTest):
             sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)  # UNIX
 
             sock.connect(path)
-            for n in range(0, 2):
+            for _ in range(2):
                 sock.send("invalid\n".encode("utf-8"))
 
             self.wait_until(lambda: self.output_count(lambda x: x >= 2))

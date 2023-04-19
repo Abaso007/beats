@@ -15,9 +15,10 @@ def tag(tag):
                 tag.strip() for tag in os.environ.get("TEST_TAGS", "").split(",")
                 if tag.strip() != ""
             ]
-            if not tag in set_tags:
+            if tag not in set_tags:
                 raise unittest.SkipTest("tag '{}' is not included in TEST_TAGS".format(tag))
             return func(*args, **kwargs)
+
         wrapper.__name__ = func.__name__
         wrapper.__doc__ = func.__doc__
         return wrapper

@@ -20,10 +20,7 @@ def is_version_below(version, target):
     t = list(map(int, target.split('.')))
     v = list(map(int, version.split('.')))
     v += [0] * (len(t) - len(v))
-    for i in range(len(t)):
-        if v[i] != t[i]:
-            return v[i] < t[i]
-    return False
+    return next((v[i] < t[i] for i in range(len(t)) if v[i] != t[i]), False)
 
 
 # Require Linux greater or equal than 2.6.32 and 386/amd64 platform
@@ -37,9 +34,8 @@ def is_platform_supported():
 
 
 def enable_ipv6_loopback():
-    f = open('/proc/sys/net/ipv6/conf/lo/disable_ipv6', 'wb')
-    f.write(b'0\n')
-    f.close()
+    with open('/proc/sys/net/ipv6/conf/lo/disable_ipv6', 'wb') as f:
+        f.write(b'0\n')
 
 
 @unittest.skipUnless(is_platform_supported(), "Requires Linux 2.6.32+ and 386/amd64 arch")
@@ -140,7 +136,7 @@ class Test(AuditbeatXPackTest):
             "socket.flow_termination_timeout": "5s",
             "socket.development_mode": "true",
         }
-        conf.update(extra_conf)
+        conf |= extra_conf
         self.render_config_template(modules=[{
             "name": "system",
             "datasets": ["socket"],
@@ -161,10 +157,7 @@ class Test(AuditbeatXPackTest):
         pass
 
     def execute(self, test):
-        cleanup = self.noop
-        if hasattr(test, 'cleanup'):
-            cleanup = test.cleanup
-
+        cleanup = test.cleanup if hasattr(test, 'cleanup') else self.noop
         if hasattr(test, 'setup'):
             test.setup()
 
@@ -187,10 +180,9 @@ class Test(AuditbeatXPackTest):
             self.wait_until(lambda: expected.match(self.flattened_output()), max_timeout=15)
             found = True
         finally:
-            assert found, "The events in: {} don't match the condition: {}".format(
-                pretty_print_json(list(self.flattened_output())),
-                expected
-            )
+            assert (
+                found
+            ), f"The events in: {pretty_print_json(list(self.flattened_output()))} don't match the condition: {expected}"
 
     def flattened_output(self):
         return [self.flatten_object(x, {}) for x in self.read_output_json()]
@@ -212,7 +204,7 @@ class TCP4TestCase:
         acc, _ = server.accept()
         acc.send(b'Hello there\n')
         msg = client.recv(64)
-        client.send(bytes('"{}" what\n'.format(msg), "utf-8"))
+        client.send(bytes(f'"{msg}" what\n', "utf-8"))
         msg = acc.recv(64)
         acc.close()
         server.close()
@@ -249,7 +241,7 @@ class UDP4TestCase:
         client, self.client_addr = socket_ipv4(socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         server, self.server_addr = socket_ipv4(socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         for i in range(3):
-            client.sendto(bytes('Hello there {}'.format(i), "utf-8"), self.server_addr)
+            client.sendto(bytes(f'Hello there {i}', "utf-8"), self.server_addr)
             msg, _ = server.recvfrom(64)
         server.sendto(b'howdy', self.client_addr)
         msg, _ = client.recvfrom(64)
@@ -290,7 +282,7 @@ class ConnectedUDP4TestCase:
         client.connect(self.server_addr)
         server.connect(self.client_addr)
         for i in range(5):
-            server.send(bytes('Hello there {}'.format(i), "utf-8"))
+            server.send(bytes(f'Hello there {i}', "utf-8"))
             msg = client.recv(64)
         client.send(b'howdy')
         msg = server.recv(64)
@@ -334,7 +326,7 @@ class ConnectedUDP6TestCase:
             client.connect(self.server_addr)
             server.connect(self.client_addr)
             for i in range(5):
-                server.send(bytes('Hello there {}'.format(i), "utf-8"))
+                server.send(bytes(f'Hello there {i}', "utf-8"))
                 msg = client.recv(64)
             client.send(b'howdy')
             msg = server.recv(64)
@@ -379,7 +371,7 @@ class UDP6TestCase:
             client, self.client_addr = socket_ipv6(socket.SOCK_DGRAM, socket.IPPROTO_UDP)
             server, self.server_addr = socket_ipv6(socket.SOCK_DGRAM, socket.IPPROTO_UDP)
             for i in range(3):
-                client.sendto(bytes('Hello there {}'.format(i), "utf-8"), self.server_addr)
+                client.sendto(bytes(f'Hello there {i}', "utf-8"), self.server_addr)
                 msg, _ = server.recvfrom(64)
             server.sendto(b'howdy', self.client_addr)
             msg, _ = client.recvfrom(64)
@@ -507,7 +499,7 @@ class SocketFactory:
         elif self.network == "ipv6":
             self.fn = socket_ipv6
         else:
-            raise Exception("invalid network: " + self.network)
+            raise Exception(f"invalid network: {self.network}")
         if self.transport == "tcp":
             self.sock_type = socket.SOCK_STREAM
             self.sock_proto = socket.IPPROTO_TCP
@@ -515,7 +507,7 @@ class SocketFactory:
             self.sock_type = socket.SOCK_DGRAM
             self.sock_proto = socket.IPPROTO_UDP
         else:
-            raise Exception("invalid transport: " + self.transport)
+            raise Exception(f"invalid transport: {self.transport}")
 
     def __call__(self, **kwargs):
         return self.fn(self.sock_type, self.sock_proto, **kwargs)
@@ -685,7 +677,7 @@ def socket_ipv4(type, proto, port=0):
 
 
 def random_address_ipv4():
-    return '127.{}.{}.{}'.format(random.randint(0, 255), random.randint(0, 255), random.randint(1, 254))
+    return f'127.{random.randint(0, 255)}.{random.randint(0, 255)}.{random.randint(1, 254)}'
 
 
 def ip_str_to_raw(ip):
@@ -696,9 +688,9 @@ def socket_ipv6(type, proto, port=0):
     if not socket.has_ipv6:
         raise Exception('No IPv6 support!')
     addr = random_address_ipv6()
-    rv = os.system('/sbin/ip -6 address add {}/128 dev lo'.format(addr))
+    rv = os.system(f'/sbin/ip -6 address add {addr}/128 dev lo')
     if rv != 0:
-        raise Exception("add ip returned {}".format(rv))
+        raise Exception(f"add ip returned {rv}")
     sock = socket.socket(socket.AF_INET6, type, proto)
     sock.bind((addr, port))
     return sock, sock.getsockname()
@@ -707,9 +699,9 @@ def socket_ipv6(type, proto, port=0):
 def release_ipv6_address(addr):
     if len(addr) == 0:
         return
-    rv = os.system('/sbin/ip -6 address delete {}/128 dev lo'.format(addr[0]))
+    rv = os.system(f'/sbin/ip -6 address delete {addr[0]}/128 dev lo')
     if rv != 0:
-        raise Exception("delete ip returned {}".format(rv))
+        raise Exception(f"delete ip returned {rv}")
 
 
 def random_address_ipv6():

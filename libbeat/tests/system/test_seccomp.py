@@ -7,10 +7,7 @@ def is_version_below(version, target):
     t = list(map(int, target.split('.')))
     v = list(map(int, version.split('.')))
     v += [0] * (len(t) - len(v))
-    for i in range(len(t)):
-        if v[i] != t[i]:
-            return v[i] < t[i]
-    return False
+    return next((v[i] < t[i] for i in range(len(t)) if v[i] != t[i]), False)
 
 
 # Require Linux greater or equal than 3.17 and 386/amd64 platform

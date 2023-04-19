@@ -12,7 +12,7 @@ class TestKeystore(BaseTest):
 
     def setUp(self):
         super(BaseTest, self).setUp()
-        self.keystore_path = self.working_dir + "/data/keystore"
+        self.keystore_path = f"{self.working_dir}/data/keystore"
 
     def test_keystore_with_present_key(self):
         """
@@ -54,17 +54,25 @@ class TestKeystore(BaseTest):
         """
         Add new secret using the --stdin option
         """
-        args = [self.test_binary,
-                "-systemTest",
-                "-c", os.path.join(self.working_dir, self.beat_name + ".yml"),
-                "-e", "-v", "-d", "*",
-                "keystore", "add", key, "--stdin",
-                ]
+        args = [
+            self.test_binary,
+            "-systemTest",
+            "-c",
+            os.path.join(self.working_dir, f"{self.beat_name}.yml"),
+            "-e",
+            "-v",
+            "-d",
+            "*",
+            "keystore",
+            "add",
+            key,
+            "--stdin",
+        ]
 
         if force:
             args.append("--force")
 
-        proc = Proc(args, os.path.join(self.working_dir, self.beat_name + ".log"))
+        proc = Proc(args, os.path.join(self.working_dir, f"{self.beat_name}.log"))
 
         os.write(proc.stdin_write, value.encode("utf-8"))
         os.close(proc.stdin_write)

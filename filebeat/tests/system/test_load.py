@@ -27,8 +27,8 @@ class Test(BaseTest):
             # rotation cannot happen when harvester has file handler still open.
             raise SkipTest
 
-        log_file = self.working_dir + "/log/test.log"
-        os.mkdir(self.working_dir + "/log/")
+        log_file = f"{self.working_dir}/log/test.log"
+        os.mkdir(f"{self.working_dir}/log/")
 
         logger = logging.getLogger('beats-logger')
         total_lines = 1000
@@ -39,13 +39,14 @@ class Test(BaseTest):
 
         # Setup python log handler
         handler = logging.handlers.RotatingFileHandler(
-            log_file, maxBytes=line_length * lines_per_file + 1,
-            backupCount=int(total_lines / lines_per_file) + 1)
+            log_file,
+            maxBytes=line_length * lines_per_file + 1,
+            backupCount=total_lines // lines_per_file + 1,
+        )
         logger.addHandler(handler)
 
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
-            # With filepath, each line can be up to 1KB is assumed
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             rotate_every_kb=(total_lines * (line_length + 1)),
             clean_removed="false",
         )
@@ -72,7 +73,7 @@ class Test(BaseTest):
 
         entry_list = []
 
-        with open(self.working_dir + "/output/filebeat") as f:
+        with open(f"{self.working_dir}/output/filebeat") as f:
             for line in f:
                 content = json.loads(line)
                 v = int(content["message"])
@@ -91,7 +92,7 @@ class Test(BaseTest):
         # print "Registry entries: " + str(len(data))
 
         # Check that file exist
-        paths = os.listdir(self.working_dir + "/log/")
+        paths = os.listdir(f"{self.working_dir}/log/")
         self.wait_until(
             lambda: len(paths) == len(self.get_registry()),
         )
@@ -115,24 +116,18 @@ class Test(BaseTest):
         number_of_files = 1000
         lines_per_file = 3
 
-        # Create content for each file
-        content = ""
-        for n in range(lines_per_file):
-            content += "Line " + str(n + 1) + "\n"
-
-        os.mkdir(self.working_dir + "/log/")
-        testfile = self.working_dir + "/log/test"
+        content = "".join(f"Line {str(n + 1)}" + "\n" for n in range(lines_per_file))
+        os.mkdir(f"{self.working_dir}/log/")
+        testfile = f"{self.working_dir}/log/test"
 
         for n in range(number_of_files):
-            with open(testfile + "-" + str(n + 1), 'w') as f:
+            with open(f"{testfile}-{str(n + 1)}", 'w') as f:
                 f.write(content)
 
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             rotate_every_kb=number_of_files * lines_per_file * 12 * 2,
             scan_frequency="40s",
-            # close_inactive="5s",
-            # close_eof=True,
         )
         filebeat = self.start_beat()
 
@@ -156,20 +151,16 @@ class Test(BaseTest):
         number_of_files = 5000
         lines_per_file = 10
 
-        # Create content for each file
-        content = ""
-        for n in range(lines_per_file):
-            content += "Line " + str(n + 1) + "\n"
-
-        os.mkdir(self.working_dir + "/log/")
-        testfile = self.working_dir + "/log/test"
+        content = "".join(f"Line {str(n + 1)}" + "\n" for n in range(lines_per_file))
+        os.mkdir(f"{self.working_dir}/log/")
+        testfile = f"{self.working_dir}/log/test"
 
         for n in range(number_of_files):
-            with open(testfile + "-" + str(n + 1), 'w') as f:
+            with open(f"{testfile}-{str(n + 1)}", 'w') as f:
                 f.write(content)
 
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
             rotate_every_kb=number_of_files * lines_per_file * 12 * 2,
         )
         filebeat = self.start_beat()

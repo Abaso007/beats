@@ -15,9 +15,7 @@ class Test(BaseTest):
         Journalbeat is able to start with the local journal.
         """
 
-        self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*"
-        )
+        self.render_config_template(path=f"{os.path.abspath(self.working_dir)}/log/*")
         journalbeat_proc = self.start_beat()
 
         self.wait_until(lambda: self.log_contains("journalbeat is running"))
@@ -32,9 +30,9 @@ class Test(BaseTest):
         """
 
         self.render_config_template(
-            journal_path=self.beat_path + "/tests/system/input/",
+            journal_path=f"{self.beat_path}/tests/system/input/",
             seek_method="tail",
-            path=os.path.abspath(self.working_dir) + "/log/*"
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
         )
         journalbeat_proc = self.start_beat()
 
@@ -45,8 +43,10 @@ class Test(BaseTest):
             "Tailing the journal file",
         ]
         for snippet in required_log_snippets:
-            self.wait_until(lambda: self.log_contains(snippet),
-                            name="Line in '{}' Journalbeat log".format(snippet))
+            self.wait_until(
+                lambda: self.log_contains(snippet),
+                name=f"Line in '{snippet}' Journalbeat log",
+            )
 
         exit_code = journalbeat_proc.kill_and_wait()
         assert exit_code == 0
@@ -58,9 +58,9 @@ class Test(BaseTest):
         """
 
         self.render_config_template(
-            journal_path=self.beat_path + "/tests/system/input/test.journal",
+            journal_path=f"{self.beat_path}/tests/system/input/test.journal",
             seek_method="head",
-            path=os.path.abspath(self.working_dir) + "/log/*"
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
         )
         journalbeat_proc = self.start_beat()
 
@@ -73,8 +73,10 @@ class Test(BaseTest):
             "\"message\": \"thinkpad_acpi: unhandled HKEY event 0x60b0\"",
         ]
         for snippet in required_log_snippets:
-            self.wait_until(lambda: self.log_contains(snippet),
-                            name="Line in '{}' Journalbeat log".format(snippet))
+            self.wait_until(
+                lambda: self.log_contains(snippet),
+                name=f"Line in '{snippet}' Journalbeat log",
+            )
 
         exit_code = journalbeat_proc.kill_and_wait()
         assert exit_code == 0
@@ -86,10 +88,10 @@ class Test(BaseTest):
         """
 
         self.render_config_template(
-            journal_path=self.beat_path + "/tests/system/input/test.journal",
+            journal_path=f"{self.beat_path}/tests/system/input/test.journal",
             seek_method="cursor",
             cursor_seek_fallback="tail",
-            path=os.path.abspath(self.working_dir) + "/log/*"
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
         )
         journalbeat_proc = self.start_beat()
 
@@ -102,8 +104,10 @@ class Test(BaseTest):
             "\"message\": \"thinkpad_acpi: please report the conditions when this event happened to ibm-acpi-devel@lists.sourceforge.net\"",
         ]
         for snippet in required_log_snippets:
-            self.wait_until(lambda: self.log_contains(snippet),
-                            name="Line in '{}' Journalbeat log".format(snippet))
+            self.wait_until(
+                lambda: self.log_contains(snippet),
+                name=f"Line in '{snippet}' Journalbeat log",
+            )
 
         exit_code = journalbeat_proc.kill_and_wait()
         assert exit_code == 0
@@ -114,15 +118,15 @@ class Test(BaseTest):
         Journalbeat is able to follow reading a from a journal with an existing registry file.
         """
 
-        registry_path = self.beat_path + "/tests/system/input/test.registry"
-        input_path = self.beat_path + "/tests/system/input/test.journal"
+        registry_path = f"{self.beat_path}/tests/system/input/test.registry"
+        input_path = f"{self.beat_path}/tests/system/input/test.journal"
         self._prepare_registry_file(registry_path, input_path)
 
         self.render_config_template(
             journal_path=input_path,
             seek_method="cursor",
             registry_file=registry_path,
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
         )
         journalbeat_proc = self.start_beat()
 
@@ -137,8 +141,10 @@ class Test(BaseTest):
             "journalbeat successfully published 1 events",
         ]
         for snippet in required_log_snippets:
-            self.wait_until(lambda: self.log_contains(snippet),
-                            name="Line in '{}' Journalbeat log".format(snippet))
+            self.wait_until(
+                lambda: self.log_contains(snippet),
+                name=f"Line in '{snippet}' Journalbeat log",
+            )
 
         exit_code = journalbeat_proc.kill_and_wait()
         assert exit_code == 0
@@ -150,10 +156,10 @@ class Test(BaseTest):
         """
 
         self.render_config_template(
-            journal_path=self.beat_path + "/tests/system/input/test.journal",
+            journal_path=f"{self.beat_path}/tests/system/input/test.journal",
             seek_method="head",
             matches="syslog.priority=5",
-            path=os.path.abspath(self.working_dir) + "/log/*",
+            path=f"{os.path.abspath(self.working_dir)}/log/*",
         )
         journalbeat_proc = self.start_beat()
 
@@ -170,8 +176,10 @@ class Test(BaseTest):
             "journalbeat successfully published 4 events",
         ]
         for snippet in required_log_snippets:
-            self.wait_until(lambda: self.log_contains(snippet),
-                            name="Line in '{}' Journalbeat log".format(snippet))
+            self.wait_until(
+                lambda: self.log_contains(snippet),
+                name=f"Line in '{snippet}' Journalbeat log",
+            )
 
         exit_code = journalbeat_proc.kill_and_wait()
         assert exit_code == 0
@@ -180,7 +188,7 @@ class Test(BaseTest):
         lines = []
         with open(registry_path, "r") as registry_file:
             lines = registry_file.readlines()
-            lines[2] = "- path: " + journal_path + "\n"
+            lines[2] = f"- path: {journal_path}" + "\n"
 
         with open(registry_path, "w") as registry_file:
             for line in lines:

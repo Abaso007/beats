@@ -23,11 +23,7 @@ def load_fileset_test_cases():
         current_dir = os.path.dirname(os.path.abspath(__file__))
         modules_dir = os.path.join(current_dir, "..", "..", "module")
     modules = os.getenv("TESTING_FILEBEAT_MODULES")
-    if modules:
-        modules = modules.split(",")
-    else:
-        modules = os.listdir(modules_dir)
-
+    modules = modules.split(",") if modules else os.listdir(modules_dir)
     filesets_env = os.getenv("TESTING_FILEBEAT_FILESETS")
 
     test_cases = []
@@ -38,11 +34,7 @@ def load_fileset_test_cases():
         if not os.path.isdir(path):
             continue
 
-        if filesets_env:
-            filesets = filesets_env.split(",")
-        else:
-            filesets = os.listdir(path)
-
+        filesets = filesets_env.split(",") if filesets_env else os.listdir(path)
         for fileset in filesets:
             if not os.path.isdir(os.path.join(path, fileset)):
                 continue
@@ -52,9 +44,7 @@ def load_fileset_test_cases():
 
             test_files = glob.glob(os.path.join(modules_dir, module,
                                                 fileset, "test", "*.log"))
-            for test_file in test_files:
-                test_cases.append([module, fileset, test_file])
-
+            test_cases.extend([module, fileset, test_file] for test_file in test_files)
     return test_cases
 
 
@@ -62,18 +52,16 @@ class Test(BaseTest):
 
     def init(self):
         self.elasticsearch_url = self.get_elasticsearch_url()
-        print("Using elasticsearch: {}".format(self.elasticsearch_url))
+        print(f"Using elasticsearch: {self.elasticsearch_url}")
         self.es = Elasticsearch([self.elasticsearch_url])
         logging.getLogger("urllib3").setLevel(logging.WARNING)
         logging.getLogger("elasticsearch").setLevel(logging.ERROR)
 
-        self.modules_path = os.path.abspath(self.working_dir +
-                                            "/../../../../module")
+        self.modules_path = os.path.abspath(f"{self.working_dir}/../../../../module")
 
-        self.filebeat = os.path.abspath(self.working_dir +
-                                        "/../../../../filebeat.test")
-
-        self.index_name = "test-filebeat-modules"
+        self.filebeat = os.path.abspath(
+            f"{self.working_dir}/../../../../filebeat.test"
+        )
 
         body = {
             "transient": {
@@ -81,6 +69,7 @@ class Test(BaseTest):
             }
         }
 
+        self.index_name = "test-filebeat-modules"
         self.es.transport.perform_request('PUT', "/_cluster/settings", body=body)
 
     @parameterized.expand(load_fileset_test_cases)
@@ -107,7 +96,7 @@ class Test(BaseTest):
             cfgfile=cfgfile)
 
     def run_on_file(self, module, fileset, test_file, cfgfile):
-        print("Testing {}/{} on {}".format(module, fileset, test_file))
+        print(f"Testing {module}/{fileset} on {test_file}")
 
         try:
             self.es.indices.delete(index=self.index_name)
@@ -116,19 +105,33 @@ class Test(BaseTest):
         self.wait_until(lambda: not self.es.indices.exists(self.index_name))
 
         cmd = [
-            self.filebeat, "-systemTest",
-            "-e", "-d", "*", "-once",
-            "-c", cfgfile,
-            "-E", "setup.ilm.enabled=false",
-            "-modules={}".format(module),
-            "-M", "{module}.*.enabled=false".format(module=module),
-            "-M", "{module}.{fileset}.enabled=true".format(
-                module=module, fileset=fileset),
-            "-M", "{module}.{fileset}.var.input=file".format(
-                module=module, fileset=fileset),
-            "-M", "{module}.{fileset}.var.paths=[{test_file}]".format(
-                module=module, fileset=fileset, test_file=test_file),
-            "-M", "*.*.input.close_eof=true",
+            self.filebeat,
+            "-systemTest",
+            "-e",
+            "-d",
+            "*",
+            "-once",
+            "-c",
+            cfgfile,
+            "-E",
+            "setup.ilm.enabled=false",
+            f"-modules={module}",
+            "-M",
+            "{module}.*.enabled=false".format(module=module),
+            "-M",
+            "{module}.{fileset}.enabled=true".format(
+                module=module, fileset=fileset
+            ),
+            "-M",
+            "{module}.{fileset}.var.input=file".format(
+                module=module, fileset=fileset
+            ),
+            "-M",
+            "{module}.{fileset}.var.paths=[{test_file}]".format(
+                module=module, fileset=fileset, test_file=test_file
+            ),
+            "-M",
+            "*.*.input.close_eof=true",
         ]
 
         # Based on the convention that if a name contains -json the json format is needed. Currently used for LS.
@@ -162,19 +165,17 @@ class Test(BaseTest):
         res = self.es.search(index=self.index_name,
                              body={"query": {"match_all": {}}, "size": 100, "sort": {"log.offset": {"order": "asc"}}})
         objects = [o["_source"] for o in res["hits"]["hits"]]
-        assert len(objects) > 0
+        assert objects
         for obj in objects:
-            assert obj["event"]["module"] == module, "expected event.module={} but got {}".format(
-                module, obj["event"]["module"])
+            assert (
+                obj["event"]["module"] == module
+            ), f'expected event.module={module} but got {obj["event"]["module"]}'
 
-            assert "error" not in obj, "not error expected but got: {}".format(
-                obj)
+            assert "error" not in obj, f"not error expected but got: {obj}"
 
-            if (module == "auditd" and fileset == "log") \
-                    or (module == "osquery" and fileset == "result"):
-                # There are dynamic fields that are not documented.
-                pass
-            else:
+            if (module != "auditd" or fileset != "log") and (
+                module != "osquery" or fileset != "result"
+            ):
                 self.assert_fields_are_documented(obj)
 
         self._test_expected_events(test_file, objects)
@@ -183,7 +184,7 @@ class Test(BaseTest):
 
         # Generate expected files if GENERATE env variable is set
         if os.getenv("GENERATE"):
-            with open(test_file + "-expected.json", 'w') as f:
+            with open(f"{test_file}-expected.json", 'w') as f:
                 # Flatten an cleanup objects
                 # This makes sure when generated on different machines / version the expected.json stays the same.
                 for k, obj in enumerate(objects):
@@ -192,11 +193,12 @@ class Test(BaseTest):
 
                 json.dump(objects, f, indent=4, separators=(',', ': '), sort_keys=True)
 
-        with open(test_file + "-expected.json", "r") as f:
+        with open(f"{test_file}-expected.json", "r") as f:
             expected = json.load(f)
 
-        assert len(expected) == len(objects), "expected {} events to compare but got {}".format(
-            len(expected), len(objects))
+        assert len(expected) == len(
+            objects
+        ), f"expected {len(expected)} events to compare but got {len(objects)}"
 
         for idx in range(len(expected)):
             ev = expected[idx]
@@ -209,7 +211,9 @@ class Test(BaseTest):
 
             d = DeepDiff(ev, obj, ignore_order=True)
 
-            assert len(d) == 0, "The following expected object doesn't match:\n Diff:\n{}, full object: \n{}".format(d, obj)
+            assert (
+                len(d) == 0
+            ), f"The following expected object doesn't match:\n Diff:\n{d}, full object: \n{obj}"
 
 
 def clean_keys(obj):
@@ -224,16 +228,6 @@ def clean_keys(obj):
     # datasets for which @timestamp is removed due to date missing
     remove_timestamp = {"icinga.startup", "redis.log", "haproxy.log",
                         "system.auth", "system.syslog", "cef.log", "activemq.audit", "iptables.log", "cisco.asa", "cisco.ios"}
-    # dataset + log file pairs for which @timestamp is kept as an exception from above
-    remove_timestamp_exception = {
-        ('system.syslog', 'tz-offset.log'),
-        ('system.auth', 'timestamp.log'),
-        ('cisco.asa', 'asa.log'),
-        ('cisco.asa', 'hostnames.log'),
-        ('cisco.asa', 'not-ip.log'),
-        ('cisco.asa', 'sample.log')
-    }
-
     # Keep source log filename for exceptions
     filename = None
     if "log.file.path" in obj:
@@ -245,7 +239,17 @@ def clean_keys(obj):
     # Most logs from syslog need their timestamp removed because it doesn't
     # include a year.
     if obj["event.dataset"] in remove_timestamp:
-        if not (obj['event.dataset'], filename) in remove_timestamp_exception:
+        # dataset + log file pairs for which @timestamp is kept as an exception from above
+        remove_timestamp_exception = {
+            ('system.syslog', 'tz-offset.log'),
+            ('system.auth', 'timestamp.log'),
+            ('cisco.asa', 'asa.log'),
+            ('cisco.asa', 'hostnames.log'),
+            ('cisco.asa', 'not-ip.log'),
+            ('cisco.asa', 'sample.log')
+        }
+
+        if (obj['event.dataset'], filename) not in remove_timestamp_exception:
             delete_key(obj, "@timestamp")
         else:
             # excluded events need to have their filename saved to the expected.json
@@ -254,9 +258,8 @@ def clean_keys(obj):
             obj["log.file.path"] = filename
 
     # Remove @timestamp from aws vpc flow log with custom format (with no event.end time).
-    if obj["event.dataset"] == "aws.vpcflow":
-        if "event.end" not in obj:
-            delete_key(obj, "@timestamp")
+    if obj["event.dataset"] == "aws.vpcflow" and "event.end" not in obj:
+        delete_key(obj, "@timestamp")
 
 
 def delete_key(obj, key):

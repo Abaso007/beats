@@ -9,7 +9,7 @@ class Test(BaseTest):
         objs = self.read_output()
 
         assert len(objs) == 2
-        assert all([o["icmp.version"] == 4 for o in objs])
+        assert all(o["icmp.version"] == 4 for o in objs)
         assert objs[0]["@timestamp"] == "2015-10-19T21:47:49.900Z"
         assert objs[0]["event.duration"] == 12152000
         assert objs[1]["@timestamp"] == "2015-10-19T21:47:49.924Z"
@@ -67,12 +67,12 @@ class Test(BaseTest):
         self.assert_common_icmp6_fields(objs[0])
 
     def assert_common_fields(self, objs):
-        assert all([o["type"] == "icmp" for o in objs])
-        assert all([o["event.dataset"] == "icmp" for o in objs])
-        assert all([o["source.bytes"] == 4 for o in objs])
-        assert all([o["destination.bytes"] == 4 for o in objs])
-        assert all([("server.port" in o) == False for o in objs])
-        assert all([("transport" in o) == False for o in objs])
+        assert all(o["type"] == "icmp" for o in objs)
+        assert all(o["event.dataset"] == "icmp" for o in objs)
+        assert all(o["source.bytes"] == 4 for o in objs)
+        assert all(o["destination.bytes"] == 4 for o in objs)
+        assert all("server.port" not in o for o in objs)
+        assert all("transport" not in o for o in objs)
 
     def assert_common_icmp4_fields(self, obj):
         assert obj["network.transport"] == "icmp"

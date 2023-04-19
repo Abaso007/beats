@@ -32,7 +32,7 @@ class Test(BaseTest):
         # get device name, leave out loopback device
         devices = [f for f in os.listdir(
             "/sys/class/net") if f.startswith("lo")]
-        assert len(devices) > 0
+        assert devices
 
         device = devices[0]
 
@@ -55,7 +55,7 @@ class Test(BaseTest):
         packetbeat = self.start_packetbeat()
 
         # wait for promisc to be turned on, cap(90s)
-        for x in range(10):
+        for _ in range(10):
             time.sleep(5)
 
             ip_proc = subprocess.Popen(
@@ -77,7 +77,7 @@ class Test(BaseTest):
         assert e is None
 
         is_promisc = "PROMISC" in o.decode("utf-8")
-        assert is_promisc == False
+        assert not is_promisc
 
         # reset device
         if prev_promisc:

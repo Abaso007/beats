@@ -70,14 +70,19 @@ def get_replacable_titles():
             for v in objects["objects"]:
 
                 # Add "{}" around titles to make them more unique and not have false positives
-                if "title" in v["attributes"]:
-                    if "ECS" not in v["attributes"]["title"]:
-                        titles['"' + v["attributes"]["title"] + '"'] = '"' + v["attributes"]["title"] + " ECS" + '"'
+                if (
+                    "title" in v["attributes"]
+                    and "ECS" not in v["attributes"]["title"]
+                ):
+                    titles['"' + v["attributes"]["title"] + '"'] = '"' + v["attributes"]["title"] + " ECS" + '"'
 
-                if "visState" in v["attributes"] and "title" in v["attributes"]["visState"]:
-                    if "ECS" not in v["attributes"]["visState"]["title"]:
-                        titles['"' + v["attributes"]["visState"]["title"] + '"'] = '"' + \
-                            v["attributes"]["visState"]["title"] + " ECS" + '"'
+                if (
+                    "visState" in v["attributes"]
+                    and "title" in v["attributes"]["visState"]
+                    and "ECS" not in v["attributes"]["visState"]["title"]
+                ):
+                    titles['"' + v["attributes"]["visState"]["title"] + '"'] = '"' + \
+                        v["attributes"]["visState"]["title"] + " ECS" + '"'
 
     return titles
 
@@ -90,9 +95,8 @@ def rename_entries(renames):
         s = open(file).read()
         for k in renames:
             s = s.replace(k, renames[k])
-        f = open(file, 'w')
-        f.write(s)
-        f.close()
+        with open(file, 'w') as f:
+            f.write(s)
 
 
 def get_files():

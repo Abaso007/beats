@@ -49,7 +49,7 @@ class TestAutodiscover(BaseTest):
 
         matched = False
         matcher = re.compile("redis", re.I)
-        for i, container in enumerate(docker_client.containers.list()):
+        for container in docker_client.containers.list():
             for tag in container.image.tags:
                 if matcher.search(tag):
                     network_settings = container.attrs['NetworkSettings']

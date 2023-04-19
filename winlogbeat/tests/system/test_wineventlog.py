@@ -18,9 +18,9 @@ Contains tests for reading from the Windows Event Log API (MS Vista and newer).
 class Test(WriteReadTest):
 
     @classmethod
-    def setUpClass(self):
-        self.api = "wineventlog"
-        super(WriteReadTest, self).setUpClass()
+    def setUpClass(cls):
+        cls.api = "wineventlog"
+        super(WriteReadTest, cls).setUpClass()
 
     def test_read_one_event(self):
         """
@@ -86,7 +86,7 @@ class Test(WriteReadTest):
         accountIdentifier = "S-1-5-21-3623811015-3361044348-30300820-1013"
         sid = win32security.ConvertStringSidToSid(accountIdentifier)
 
-        msg = "Unknown SID " + accountIdentifier
+        msg = f"Unknown SID {accountIdentifier}"
         self.write_event_log(msg, sid=sid)
         evts = self.read_events()
         self.assertTrue(len(evts), 1)
@@ -173,8 +173,10 @@ class Test(WriteReadTest):
         self.assert_common_fields(evts[0], msg=msg)
         self.assertTrue("event.original" in evts[0])
         original = evts[0]["event.original"]
-        self.assertTrue(original.endswith('</Event>'),
-                        'xml value should end with </Event>: "{}"'.format(original))
+        self.assertTrue(
+            original.endswith('</Event>'),
+            f'xml value should end with </Event>: "{original}"',
+        )
 
     def test_query_event_id(self):
         """
@@ -336,7 +338,7 @@ class Test(WriteReadTest):
                u'\u30A4\u30F3\u30B9\u30C8\u30FC\u30EB\u30B9\u30AF\u30EA'
                u'\u30D7\u30C8\u3092\u5B9F\u884C\u3057'
                u'\u8C61\u5F62\u5B57')
-        self.write_event_log(str(msg))
+        self.write_event_log(msg)
         evts = self.read_events(config={
             "event_logs": [
                 {
@@ -412,4 +414,6 @@ Logon Process Name:  IKE"""
         self.assertNotIn("event.original", evts[0], msg=evts[0])
         self.assertIn("message", evts[0], msg=evts[0])
         self.assertNotIn("\\u000a", evts[0]["message"], msg=evts[0])
-        self.assertEqual(str(msg), codecs.decode(evts[0]["message"], "unicode_escape"), msg=evts[0])
+        self.assertEqual(
+            msg, codecs.decode(evts[0]["message"], "unicode_escape"), msg=evts[0]
+        )

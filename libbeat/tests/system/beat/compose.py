@@ -46,7 +46,7 @@ class ComposeMixin(object):
             return
 
         def print_logs(container):
-            print("---- " + container.name_without_project)
+            print(f"---- {container.name_without_project}")
             print(container.logs())
             print("----")
 
@@ -74,8 +74,8 @@ class ComposeMixin(object):
                 if not container.is_running:
                     print_logs(container)
                     raise Exception(
-                        "Container %s unexpectedly finished on startup" %
-                        container.name_without_project)
+                        f"Container {container.name_without_project} unexpectedly finished on startup"
+                    )
                 if not is_healthy(container):
                     healthy = False
                     break
@@ -108,7 +108,7 @@ class ComposeMixin(object):
         """
         host = cls.compose_host(service=service, port=cls.COMPOSE_ADVERTISED_PORT)
 
-        content = "SERVICE_HOST=%s" % host
+        content = f"SERVICE_HOST={host}"
         info = tarfile.TarInfo(name="/run/compose_env")
         info.mode = 0o100644
         info.size = len(content)
@@ -152,9 +152,8 @@ class ComposeMixin(object):
         networks = list(info['NetworkSettings']['Networks'].values())
         port = port.split("/")[0]
         for network in networks:
-            ip = network['IPAddress']
-            if ip:
-                return "%s:%s" % (ip, port)
+            if ip := network['IPAddress']:
+                return f"{ip}:{port}"
 
     @classmethod
     def _exposed_host(cls, info, port):
@@ -163,7 +162,7 @@ class ComposeMixin(object):
         run from the host network. Recommended when using docker machines.
         """
         hostPort = info['NetworkSettings']['Ports'][port][0]['HostPort']
-        return "localhost:%s" % hostPort
+        return f"localhost:{hostPort}"
 
     @classmethod
     def compose_host(cls, service=None, port=None):
@@ -173,15 +172,14 @@ class ComposeMixin(object):
         if service is None:
             service = cls.COMPOSE_SERVICES[0]
 
-        host_env = os.environ.get(service.upper() + "_HOST")
-        if host_env:
+        if host_env := os.environ.get(f"{service.upper()}_HOST"):
             return host_env
 
         container = cls.compose_project().containers(service_names=[service])[0]
         info = container.inspect()
         portsConfig = info['HostConfig']['PortBindings']
         if len(portsConfig) == 0:
-            raise Exception("No exposed ports for service %s" % service)
+            raise Exception(f"No exposed ports for service {service}")
         if port is None:
             port = list(portsConfig.keys())[0]
 
@@ -226,8 +224,5 @@ class ComposeMixin(object):
     @classmethod
     def service_log_contains(cls, service, msg):
         log = cls.get_service_log(service)
-        counter = 0
-        for line in log.splitlines():
-            if line.find(msg.encode("utf-8")) >= 0:
-                counter += 1
+        counter = sum(line.find(msg.encode("utf-8")) >= 0 for line in log.splitlines())
         return counter > 0

@@ -60,9 +60,7 @@ class Test(metricbeat.BaseTest):
 
     def get_version(self):
         host = self.get_hosts()[0]
-        res = urllib.request.urlopen("http://" + host + "/").read()
+        res = urllib.request.urlopen(f"http://{host}/").read()
 
         body = json.loads(res)
-        version = body["version"]
-
-        return version
+        return body["version"]

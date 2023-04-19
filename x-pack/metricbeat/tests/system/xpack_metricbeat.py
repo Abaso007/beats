@@ -9,17 +9,18 @@ import metricbeat
 class XPackTest(metricbeat.BaseTest):
 
     @classmethod
-    def setUpClass(self):
-        self.beat_name = "metricbeat"
-        self.beat_path = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "../../"))
+    def setUpClass(cls):
+        cls.beat_name = "metricbeat"
+        cls.beat_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "../../")
+        )
 
-        self.template_paths = [
-            os.path.abspath(os.path.join(self.beat_path, "../../metricbeat")),
-            os.path.abspath(os.path.join(self.beat_path, "../../libbeat")),
+        cls.template_paths = [
+            os.path.abspath(os.path.join(cls.beat_path, "../../metricbeat")),
+            os.path.abspath(os.path.join(cls.beat_path, "../../libbeat")),
         ]
 
-        super(XPackTest, self).setUpClass()
+        super(XPackTest, cls).setUpClass()
 
     def setUp(self):
         super(XPackTest, self).setUp()

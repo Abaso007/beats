@@ -59,8 +59,11 @@ class Test(metricbeat.BaseTest):
         }])
         proc = self.start_beat()
         self.wait_until(lambda: self.log_contains("Starting HTTP"))
-        requests.post("http://" + host + ":" + str(port),
-                      json={'hello': 'world'}, headers={'Content-Type': 'application/json'})
+        requests.post(
+            f"http://{host}:{port}",
+            json={'hello': 'world'},
+            headers={'Content-Type': 'application/json'},
+        )
         self.wait_until(lambda: self.output_lines() > 0)
         proc.check_kill_and_wait()
         self.assert_no_logged_warnings()
@@ -79,4 +82,4 @@ class Test(metricbeat.BaseTest):
         self.assert_fields_are_documented(evt)
 
     def get_host(self):
-        return "http://" + self.compose_host()
+        return f"http://{self.compose_host()}"

@@ -16,13 +16,13 @@ class Test(BaseTest):
         """
 
         self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/test.log",
+            path=f"{os.path.abspath(self.working_dir)}/log/test.log",
             input_type_deprecated="log",
-            scan_frequency="0.1s"
+            scan_frequency="0.1s",
         )
-        os.mkdir(self.working_dir + "/log/")
+        os.mkdir(f"{self.working_dir}/log/")
 
-        logfile = self.working_dir + "/log/test.log"
+        logfile = f"{self.working_dir}/log/test.log"
 
         with open(logfile, 'w') as f:
             f.write("Hello world\n")

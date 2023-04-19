@@ -109,7 +109,7 @@ class Test(BaseTest):
         self.wait_until(lambda: self.log_contains("template with name 'bla' loaded"))
         proc.check_kill_and_wait()
 
-        result = es.transport.perform_request('GET', '/_template/' + template_name)
+        result = es.transport.perform_request('GET', f'/_template/{template_name}')
         assert len(result) == 1
 
     def get_host(self):
@@ -124,7 +124,7 @@ class TestRunTemplate(BaseTest):
     def setUp(self):
         super(TestRunTemplate, self).setUp()
         # auto-derived default settings, if nothing else is set
-        self.index_name = self.beat_name + "-9.9.9"
+        self.index_name = f"{self.beat_name}-9.9.9"
 
         self.es = self.es_client()
         self.idxmgmt = IdxMgmt(self.es, self.index_name)
@@ -181,8 +181,8 @@ class TestCommandSetupTemplate(BaseTest):
 
         # auto-derived default settings, if nothing else is set
         self.setupCmd = "--template"
-        self.index_name = self.beat_name + "-9.9.9"
-        self.custom_alias = self.beat_name + "_foo"
+        self.index_name = f"{self.beat_name}-9.9.9"
+        self.custom_alias = f"{self.beat_name}_foo"
         self.policy_name = self.beat_name
 
         self.es = self.es_client()
@@ -227,7 +227,9 @@ class TestCommandSetupTemplate(BaseTest):
 
         assert exit_code == 0
         self.idxmgmt.assert_ilm_template_loaded(self.index_name, self.policy_name, self.index_name)
-        self.idxmgmt.assert_index_template_index_pattern(self.index_name, [self.index_name + "-*"])
+        self.idxmgmt.assert_index_template_index_pattern(
+            self.index_name, [f"{self.index_name}-*"]
+        )
 
         # when running `setup --template`
         # write_alias and rollover_policy related to ILM are also created
@@ -269,7 +271,9 @@ class TestCommandSetupTemplate(BaseTest):
         self.idxmgmt.assert_index_template_loaded(self.index_name)
 
         # check that settings are overwritten
-        resp = self.es.transport.perform_request('GET', '/_template/' + self.index_name)
+        resp = self.es.transport.perform_request(
+            'GET', f'/_template/{self.index_name}'
+        )
         assert self.index_name in resp
         index = resp[self.index_name]["settings"]["index"]
         assert index["number_of_shards"] == "2", index["number_of_shards"]
@@ -281,13 +285,21 @@ class TestCommandSetupTemplate(BaseTest):
         Test template setup with changed ilm.rollover_alias config
         """
         self.render_config()
-        exit_code = self.run_beat(logging_args=["-v", "-d", "*"],
-                                  extra_args=["setup", self.setupCmd,
-                                              "-E", "setup.ilm.rollover_alias=" + self.custom_alias])
+        exit_code = self.run_beat(
+            logging_args=["-v", "-d", "*"],
+            extra_args=[
+                "setup",
+                self.setupCmd,
+                "-E",
+                f"setup.ilm.rollover_alias={self.custom_alias}",
+            ],
+        )
 
         assert exit_code == 0
         self.idxmgmt.assert_ilm_template_loaded(self.custom_alias, self.policy_name, self.custom_alias)
-        self.idxmgmt.assert_index_template_index_pattern(self.custom_alias, [self.custom_alias + "-*"])
+        self.idxmgmt.assert_index_template_index_pattern(
+            self.custom_alias, [f"{self.custom_alias}-*"]
+        )
 
     @unittest.skipUnless(INTEGRATION_TESTS, "integration test")
     @attr('integration')
@@ -298,25 +310,43 @@ class TestCommandSetupTemplate(BaseTest):
 
         # ensure template with ilm rollover_alias name is created, but ilm policy not yet
         self.render_config()
-        exit_code = self.run_beat(logging_args=["-v", "-d", "*"],
-                                  extra_args=["setup", self.setupCmd,
-                                              "-E", "setup.ilm.enabled=false",
-                                              "-E", "setup.template.name=" + self.custom_alias,
-                                              "-E", "setup.template.pattern=" + self.custom_alias + "*"])
+        exit_code = self.run_beat(
+            logging_args=["-v", "-d", "*"],
+            extra_args=[
+                "setup",
+                self.setupCmd,
+                "-E",
+                "setup.ilm.enabled=false",
+                "-E",
+                f"setup.template.name={self.custom_alias}",
+                "-E",
+                f"setup.template.pattern={self.custom_alias}*",
+            ],
+        )
         assert exit_code == 0
         self.idxmgmt.assert_index_template_loaded(self.custom_alias)
         self.idxmgmt.assert_policy_not_created(self.policy_name)
 
         # ensure ilm policy is created, triggering overwriting existing template
-        exit_code = self.run_beat(extra_args=["setup", self.setupCmd,
-                                              "-E", "setup.template.overwrite=false",
-                                              "-E", "setup.template.settings.index.number_of_shards=2",
-                                              "-E", "setup.ilm.rollover_alias=" + self.custom_alias])
+        exit_code = self.run_beat(
+            extra_args=[
+                "setup",
+                self.setupCmd,
+                "-E",
+                "setup.template.overwrite=false",
+                "-E",
+                "setup.template.settings.index.number_of_shards=2",
+                "-E",
+                f"setup.ilm.rollover_alias={self.custom_alias}",
+            ]
+        )
         assert exit_code == 0
         self.idxmgmt.assert_ilm_template_loaded(self.custom_alias, self.policy_name, self.custom_alias)
         self.idxmgmt.assert_policy_created(self.policy_name)
         # check that template was overwritten
-        resp = self.es.transport.perform_request('GET', '/_template/' + self.custom_alias)
+        resp = self.es.transport.perform_request(
+            'GET', f'/_template/{self.custom_alias}'
+        )
         assert self.custom_alias in resp
         index = resp[self.custom_alias]["settings"]["index"]
         assert index["number_of_shards"] == "2", index["number_of_shards"]
@@ -333,7 +363,7 @@ class TestCommandExportTemplate(BaseTest):
         self.config = "libbeat.yml"
         self.output = os.path.join(self.working_dir, self.config)
         shutil.copy(os.path.join(self.beat_path, "fields.yml"), self.output)
-        self.template_name = self.beat_name + "-9.9.9"
+        self.template_name = f"{self.beat_name}-9.9.9"
 
     def assert_log_contains_template(self, index_pattern):
         assert self.log_contains('Loaded index template')
@@ -350,7 +380,7 @@ class TestCommandExportTemplate(BaseTest):
             config=self.config)
 
         assert exit_code == 0
-        self.assert_log_contains_template(self.template_name + "-*")
+        self.assert_log_contains_template(f"{self.template_name}-*")
 
     def test_changed_index_pattern(self):
         """
@@ -361,12 +391,17 @@ class TestCommandExportTemplate(BaseTest):
         alias_name = "mockbeat-ilm-index-pattern"
 
         exit_code = self.run_beat(
-            extra_args=["export", "template",
-                        "-E", "setup.ilm.rollover_alias=" + alias_name],
-            config=self.config)
+            extra_args=[
+                "export",
+                "template",
+                "-E",
+                f"setup.ilm.rollover_alias={alias_name}",
+            ],
+            config=self.config,
+        )
 
         assert exit_code == 0
-        self.assert_log_contains_template(alias_name + "-*")
+        self.assert_log_contains_template(f"{alias_name}-*")
 
     def test_load_disabled(self):
         """
@@ -379,7 +414,7 @@ class TestCommandExportTemplate(BaseTest):
             config=self.config)
 
         assert exit_code == 0
-        self.assert_log_contains_template(self.template_name + "-*")
+        self.assert_log_contains_template(f"{self.template_name}-*")
 
     def test_export_to_file_absolute_path(self):
         """
@@ -390,16 +425,17 @@ class TestCommandExportTemplate(BaseTest):
 
         base_path = os.path.abspath(os.path.join(self.beat_path, os.path.dirname(__file__), "export"))
         exit_code = self.run_beat(
-            extra_args=["export", "template", "--dir=" + base_path],
-            config=self.config)
+            extra_args=["export", "template", f"--dir={base_path}"],
+            config=self.config,
+        )
 
         assert exit_code == 0
 
-        file = os.path.join(base_path, "template", self.template_name + '.json')
+        file = os.path.join(base_path, "template", f'{self.template_name}.json')
         with open(file) as f:
             template = json.load(f)
         assert 'index_patterns' in template
-        assert template['index_patterns'] == [self.template_name + '-*'], template
+        assert template['index_patterns'] == [f'{self.template_name}-*'], template
 
         os.remove(file)
 
@@ -412,16 +448,16 @@ class TestCommandExportTemplate(BaseTest):
 
         path = os.path.join(os.path.dirname(__file__), "export")
         exit_code = self.run_beat(
-            extra_args=["export", "template", "--dir=" + path],
-            config=self.config)
+            extra_args=["export", "template", f"--dir={path}"], config=self.config
+        )
 
         assert exit_code == 0
 
         base_path = os.path.abspath(os.path.join(self.beat_path, os.path.dirname(__file__), "export"))
-        file = os.path.join(base_path, "template", self.template_name + '.json')
+        file = os.path.join(base_path, "template", f'{self.template_name}.json')
         with open(file) as f:
             template = json.load(f)
         assert 'index_patterns' in template
-        assert template['index_patterns'] == [self.template_name + '-*'], template
+        assert template['index_patterns'] == [f'{self.template_name}-*'], template
 
         os.remove(file)

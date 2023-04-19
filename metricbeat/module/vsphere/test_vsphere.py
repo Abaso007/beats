@@ -15,7 +15,7 @@ class TestVsphere(metricbeat.BaseTest):
 
     @classmethod
     def get_hosts(cls):
-        return ['https://{}/sdk'.format(cls.compose_host())]
+        return [f'https://{cls.compose_host()}/sdk']
 
     @unittest.skipUnless(metricbeat.INTEGRATION_TESTS, "integration test")
     def test_datastore(self):

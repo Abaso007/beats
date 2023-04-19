@@ -1,7 +1,7 @@
 import time
 import sys
 
-for x in range(0, 100):
+for x in range(100):
     print(x)
     time.sleep(1)
     sys.stdout.flush()
@@ -17,6 +17,8 @@ line_length = len(str(total_lines)) + 1
 
 # Setup python log handler
 handler = logging.handlers.RotatingFileHandler(
-    log_file, maxBytes=line_length * lines_per_file + 1,
-    backupCount=int(total_lines/lines_per_file) + 1)
+    log_file,
+    maxBytes=line_length * lines_per_file + 1,
+    backupCount=total_lines // lines_per_file + 1,
+)
 logger.addHandler(handler)

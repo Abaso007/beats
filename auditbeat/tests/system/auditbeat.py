@@ -13,19 +13,19 @@ from metricbeat import BaseTest as MetricbeatTest
 
 class BaseTest(MetricbeatTest):
     @classmethod
-    def setUpClass(self):
-        self.beat_name = "auditbeat"
+    def setUpClass(cls):
+        cls.beat_name = "auditbeat"
 
-        if not hasattr(self, 'beat_path'):
-            self.beat_path = os.path.abspath(
-                os.path.join(os.path.dirname(__file__), "../../"))
+        if not hasattr(cls, 'beat_path'):
+            cls.beat_path = os.path.abspath(
+                os.path.join(os.path.dirname(__file__), "../../")
+            )
 
-        super(MetricbeatTest, self).setUpClass()
+        super(MetricbeatTest, cls).setUpClass()
 
     def create_file(self, path, contents):
-        f = open(path, 'wb')
-        f.write(bytes(contents, "utf-8"))
-        f.close()
+        with open(path, 'wb') as f:
+            f.write(bytes(contents, "utf-8"))
 
     def check_event(self, event, expected):
         for key in expected:

@@ -36,7 +36,7 @@ class Test(BaseTest):
         self.render_config_template(**config)
         self.run_packetbeat(pcap=pcap)
         objs = [self.flatten_object(clean_keys(o), {}, "") for o in self.read_output()]
-        assert len(objs) > 0, "No output generated"
+        assert objs, "No output generated"
 
         if os.getenv("GENERATE"):
             with open(os.path.join(golden_dir, golden), 'w') as f:
@@ -45,18 +45,16 @@ class Test(BaseTest):
         with open(os.path.join(golden_dir, golden), 'r') as f:
             expected = json.load(f)
 
-        assert len(expected) == len(objs), "expected {} events to compare but got {}".format(
-            len(expected), len(objs))
+        assert len(expected) == len(
+            objs
+        ), f"expected {len(expected)} events to compare but got {len(objs)}"
 
         for ev in expected:
             clean_keys(ev)
-            found = False
-            for obj in objs:
-                if ev == obj:
-                    found = True
-                    break
-            assert found, "The following expected object was not found:\n {}\nSearched in: \n{}".format(
-                pretty_json(ev), pretty_json(objs))
+            found = any(ev == obj for obj in objs)
+            assert (
+                found
+            ), f"The following expected object was not found:\n {pretty_json(ev)}\nSearched in: \n{pretty_json(objs)}"
 
 
 def clean_keys(obj):
